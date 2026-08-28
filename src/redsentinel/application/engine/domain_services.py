@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from redsentinel.application.engine.attack_pack import (
+    load_ecommerce_attack_pack,
+    load_openmanus_attack_pack,
+)
+from redsentinel.application.engine.source_ingress import create_source_snapshot
 from redsentinel.application.engine.service import (
     AgentAdapter,
     AgentMaterial,
@@ -27,13 +32,12 @@ from redsentinel.application.engine.service import (
     NextRoundResponse,
     SupervisionEventStore,
     ToolSpecModel,
-    _adapter_type_for,
     _builtin_adapter_for,
     _critical_node_blocked,
     _defense_suggestions,
     _evaluation_status_from_record,
     _expected_case_count,
-    _hosted_adapter_for,
+
     _is_auto_generated_ecommerce_profile,
     _log_bypassed_nodes,
     _log_sort_key,
@@ -48,7 +52,7 @@ from redsentinel.application.engine.service import (
     _read_runtime_security_events,
     _runtime_event_matches_evaluation,
     _runtime_security_event_paths,
-    _secret_ref,
+
     _selected_benchmark_cases,
     _supervision_event_from_runtime_event,
     _trend_label,
@@ -98,45 +102,43 @@ class AgentManagementService(_OwnedService):
     def onboard_agent(self, request: AgentOnboardingRequest) -> AgentOnboardingResponse:
         safe_component(request.tenant_id, "tenant_id")
         safe_component(request.agent_id, "agent_id")
-        secret_ref = _secret_ref(request.tenant_id, request.agent_id) if request.api_key is not None else None
-        credential = request.credential_summary(secret_ref=secret_ref)
+        source_snapshot = create_source_snapshot(
+            request.source_path,
+            request.build_manifest_path,
+        )
         registration = AgentRegistration(
             tenant_id=request.tenant_id,
             username=request.username or request.tenant_id,
             agent_id=request.agent_id,
             name=request.name,
             domain=request.domain,
-            integration_type=request.integration_type,
+            integration_type="source",
             framework=request.framework,
-            adapter_type=_adapter_type_for(request.integration_type),
-            endpoint_url=request.endpoint_url,
-            secret_ref=credential.secret_ref,
-            has_api_key=credential.has_api_key,
-            masked_api_key=credential.masked_api_key,
+            adapter_type=source_snapshot.adapter_type,
             status="created",
             remarks=request.remarks,
             data_boundary={
-                "deployment": "private_single_tenant",
-                "integration_type": request.integration_type,
+                "deployment": "sentinel_managed_sandbox",
+                "integration_type": "source",
+                "source_snapshot_sha256": source_snapshot.snapshot_sha256,
+                "sandbox_adapter_type": source_snapshot.adapter_type,
+                "customer_runtime_access": False,
             },
         )
-        # Keep hosted API secrets process-local; persisted records store only masked metadata and secret_ref.
-        api_key = request.api_key.get_secret_value() if request.api_key is not None else None
-        self.register_agent(registration, adapter=_hosted_adapter_for(registration, api_key))
+        self.register_agent(registration)
 
         material = AgentMaterial(
             material_id=_material_id(request.agent_id),
             tenant_id=request.tenant_id,
             agent_id=request.agent_id,
-            type=request.integration_type,
-            source_path=request.source_path,
-            openapi_path=request.openapi_path,
-            docker_image=request.docker_image,
-            endpoint_url=request.endpoint_url,
-            secret_ref=credential.secret_ref,
-            has_api_key=credential.has_api_key,
-            masked_api_key=credential.masked_api_key,
-            uploaded_files=request.uploaded_files,
+            type="source",
+            source_path=source_snapshot.source_path,
+            build_manifest_path=source_snapshot.build_manifest_path,
+            source_sha256=source_snapshot.source_sha256,
+            build_manifest_sha256=source_snapshot.build_manifest_sha256,
+            source_snapshot_sha256=source_snapshot.snapshot_sha256,
+            source_file_count=source_snapshot.source_file_count,
+            source_snapshot_verified=True,
         )
         self.storage.write_material(
             material.tenant_id,
@@ -152,17 +154,33 @@ class AgentManagementService(_OwnedService):
             profile.profile_id,
             profile.model_dump(mode="json"),
         )
-        benchmark_stage = self._complete_initial_benchmark_job(registration)
-        defense_stage = AgentOnboardingStage(
-            name="default_defense_mount",
+        source_stage = AgentOnboardingStage(
+            name="source_snapshot",
             status="completed",
-            mode="simulated",
-            message="Default input, tool, and output defenses were attached for MVP onboarding.",
-            details={"policies": ["input_validation", "tool_policy", "output_masking"]},
+            mode="sha256",
+            message="Source tree and build manifest were frozen for sandbox execution.",
+            details={
+                "source_sha256": source_snapshot.source_sha256,
+                "build_manifest_sha256": source_snapshot.build_manifest_sha256,
+                "source_snapshot_sha256": source_snapshot.snapshot_sha256,
+                "source_file_count": source_snapshot.source_file_count,
+                "adapter_type": source_snapshot.adapter_type,
+            },
+        )
+        sandbox_stage = AgentOnboardingStage(
+            name="sandbox_build_plan",
+            status="completed",
+            mode="source_build",
+            message="The verified source snapshot is ready for Sentinel-managed sandbox build.",
+            details={
+                "build_manifest_path": source_snapshot.build_manifest_path,
+                "adapter_type": source_snapshot.adapter_type,
+                "network_scope": "isolated",
+                "customer_runtime_access": False,
+            },
         )
 
-        ready_status = "ready" if benchmark_stage.status == "completed" else "failed"
-        ready_registration = registration.model_copy(update={"status": ready_status})
+        ready_registration = registration.model_copy(update={"status": "ready"})
         self.register_agent(ready_registration)
         return AgentOnboardingResponse(
             tenant_id=request.tenant_id,
@@ -174,14 +192,23 @@ class AgentManagementService(_OwnedService):
             profile=profile,
             stages=[
                 AgentOnboardingStage(name="agent_record", status="completed"),
-                AgentOnboardingStage(name="profile_analysis", status="completed", mode="simulated"),
-                benchmark_stage,
-                defense_stage,
+                source_stage,
+                AgentOnboardingStage(
+                    name="profile_analysis",
+                    status="completed",
+                    mode="static_source",
+                ),
+                sandbox_stage,
             ],
         )
 
     def get_agent(self, agent_id: str, tenant_id: str = "private_tenant") -> AgentRegistration:
         return self._require_registration(tenant_id, agent_id)
+
+    def unregister_agent(self, agent_id: str, tenant_id: str = "private_tenant") -> None:
+        key = (tenant_id, agent_id)
+        self._registrations.pop(key, None)
+        self._adapters.pop(key, None)
 
     def get_agent_profile(self, agent_id: str, tenant_id: str = "private_tenant") -> AgentProfile:
         tenant_id = safe_component(tenant_id, "tenant_id")
@@ -239,6 +266,7 @@ class EvaluationLifecycleService(_OwnedService):
                 "benchmark_id": benchmark_id,
                 "benchmark_version": benchmark_version,
                 "defense_enabled": request.defense_enabled,
+                "seed": request.seed,
                 **status.model_dump(mode="json"),
             },
         )
@@ -283,6 +311,7 @@ class EvaluationLifecycleService(_OwnedService):
                     "benchmark_id": report.benchmark_id or benchmark_id,
                     "benchmark_version": report.benchmark_version or benchmark_version,
                     "defense_enabled": request.defense_enabled,
+                    "seed": request.seed,
                     **completed.model_dump(mode="json"),
                     "completed_at": report.summary.get("completed_at"),
                     "report_status": report.status,
@@ -305,6 +334,7 @@ class EvaluationLifecycleService(_OwnedService):
                     "benchmark_id": benchmark_id,
                     "benchmark_version": benchmark_version,
                     "defense_enabled": request.defense_enabled,
+                    "seed": request.seed,
                     **failed.model_dump(mode="json"),
                 },
             )
@@ -371,6 +401,11 @@ class EvaluationLifecycleService(_OwnedService):
             "failed_case_ids": failed_case_ids,
             "bypassed_nodes": bypassed_nodes,
             "defense_suggestions": defense_suggestions,
+            "scenario_payloads": _next_round_scenario_payloads(
+                benchmark_id,
+                prompt_note,
+                failed_case_ids,
+            ),
             "generated_at": utc_now_iso(),
         }
         next_benchmark = BenchmarkVersion(
@@ -416,6 +451,36 @@ class EvaluationLifecycleService(_OwnedService):
         if not path.exists():
             raise ValueError(f"Trajectory not found: {tenant_id}/{trajectory_id}")
         return self.storage.read_json(path)
+
+
+def _next_round_scenario_payloads(
+    benchmark_id: str,
+    prompt_note: str,
+    failed_case_ids: list[str],
+) -> list[dict[str, Any]]:
+    scenarios = (
+        load_openmanus_attack_pack().scenarios
+        if benchmark_id == "openmanus-security-v0.1"
+        else load_ecommerce_attack_pack().scenarios
+    )
+    focused_ids = set(failed_case_ids) or {
+        scenario.scenario_id for scenario in scenarios
+    }
+    payloads = []
+    for scenario in scenarios:
+        controlled_steps = list(scenario.controlled_steps)
+        if scenario.scenario_id in focused_ids:
+            last = controlled_steps[-1]
+            controlled_steps[-1] = last.model_copy(
+                update={"message": f"{last.message}{prompt_note}"}
+            )
+        payloads.append(
+            scenario.model_copy(
+                update={"controlled_steps": controlled_steps}
+            ).model_dump(mode="json")
+        )
+    return payloads
+
 
 class ReportQueryService(_OwnedService):
     """Owns reportquery product operations."""

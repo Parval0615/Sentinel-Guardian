@@ -1,133 +1,193 @@
-# RedSentinel：Agent 安全评测协同进化研究框架
+# Sentinel-Guardian：企业 Agent 上线前自主安全审计与自动加固智能体
 
-RedSentinel 是面向大模型 Agent 的轨迹级安全评测与攻防协同进化研究框架。它把企业知识引擎中的质量评测和自动化经验扩展到 LLM 推理、RAG、工具、记忆与状态变化，并研究证据约束、效用感知的双边进化能否优于静态攻防和单边优化。
+Sentinel-Guardian 是“生成式大语言模型与智能体”赛题作品，解决企业 Agent 上线前
+缺少自动化安全验收的问题。
 
-项目同时服务于 AI 安全实习项目展示、毕业论文和后续研究投稿。当前最强证据是确定性离线工程 smoke；真实 OpenManus 与跨 Agent 结论仍待 P1 实验。Product API 和 dashboard 是可选展示层，不代表生产成熟度。
+桌面应用以同级 `agents/` 目录为唯一资产来源。每个 Agent 使用
+`agent.json + image.tar`（Docker Archive）或 OCI Image Layout 交付；系统不执行镜像
+即可提取镜像配置、Python 源码中的入口、依赖、框架、工具、权限、控制和数据流证据，并生成
+`agent-profile-v0.2`。源码目录 onboarding 仍作为 API 兼容入口保留。
 
-## 五分钟离线演示
+静态画像不要求 Docker 或模型 API。AI 语义补全没有完整配置时会明确跳过；离线归档
+没有可信运行时镜像引用时，动态验证标记失败，但证据闭合的静态画像仍以 `partial`
+发布。真实动态验证需要 Docker Desktop；模型凭据仅用于可选语义补全和真实审计执行。
+
+离线回归与真实 Docker 画像验收是两条独立路径。离线命令不执行镜像、不需要 Docker，
+只生成明确命名为 `task15-partial` / `task13-partial-*` 的 `partial` 制品：
 
 ```bash
-python -m pip install -e ".[all,dev]"
-redsentinel demo --output-dir artifacts --seed 42
+python3 scripts/generate_task15_artifacts.py --mode partial
 ```
 
-命令在不依赖网络、Docker 和 API key 的条件下完成：
+真实验收要求 Docker Desktop 可用，通过生产镜像解析、加载和动态探针重新生成两个
+内置 Agent 的正式制品。当前容器内探针行为属于镜像自报证据，因此正式制品必须明确
+保持 `analysis.status=partial` 和 `completeness.conclusion=partial`；只有接入
+Sentinel 控制的宿主侧独立行为观测器后，画像才允许达到 `complete`：
+
+```bash
+python3 scripts/verify_task13_e2e.py
+```
+
+只复核已经生成的正式制品，不启动容器：
+
+```bash
+python3 scripts/verify_task13_e2e.py --existing
+```
+
+正式 Docker 制品位于 `artifacts/task15/` 和 `artifacts/task13-*.json`。每个 bundle manifest
+绑定 `image_digest`、`config_digest`、`profile_id`、`profile_sha256`、完整度摘要和
+四个内容文件的 SHA-256；任何文件或绑定缺失都会使验收失败。
+
+本仓库当前只服务这场比赛，不再维护独立的研究、论文、投稿或求职路线。
+
+对外产品名统一为 **Sentinel-Guardian**。现有 `redsentinel` Python 包、CLI、
+`redsentinel.yaml` 和 artifact schema 作为兼容接口保留。
+
+## 比赛任务
+
+用户的统一任务是：
+
+> 审计这个 Agent 是否可以上线；发现风险后生成最小化加固方案，并验证正常业务能力
+> 是否保留。
+
+Sentinel-Guardian 自主执行：
 
 ```text
-doctor -> profile -> paired evaluation -> co-evolution -> evidence summary
+静态解析镜像
+  -> 识别 Agent、Prompt、Memory、Tool、MCP、权限和 Guard
+  -> 重建输入到高风险 Sink 的路径
+  -> 攻击 Agent 生成攻击集并标注预测 node_id/path_id
+  -> 检查画像、Docker、运行镜像和三模型状态
+  -> 用户审阅攻击范围并明确批准正式审计
+  -> OpenManus 隔离容器逐条执行攻击
+  -> 记录攻击成功状态和实际失效节点
+  -> 防御 Agent 生成并挂载局部 Guard
+  -> Guarded 复测并形成一轮审计结果
+  -> 根据失败场景、绕过节点和最弱链路生成下一轮攻击集
 ```
 
-核心入口是 `artifacts/p0-demo/p0-demo-summary-v1.json`，它回指 profile、provenance、两个 evidence index，以及记忆污染、工具篡改、目标扰动三条轨迹证据。完整讲稿见 [P0 五分钟演示](docs/research/demo/p0-demo-script.md)。
+最终决策固定为：
 
-## 当前证据
+- `允许上线`
+- `修复后复测`
+- `高风险，禁止上线`
+- `需要人工审批`
 
-| 证据 | 当前结果 | 模式 | 结论边界 |
-|---|---:|---|---|
-| 默认离线测试 | 752 passed | `offline_fixture` | 冻结基线工程回归 |
-| 配对单轮 smoke | 3/3 passed，FPR 0 | `offline_fixture` | 链路验证 |
-| 协同进化 smoke | ASR 43.75% -> 0%，7 轮 | `offline_fixture` | 算法 smoke，非真实效果 |
-| 实验设计 | 4 类基线、5 类消融 | 配置与测试 | 研究能力 |
-| OpenManus | `not_evaluated` | `real_runtime` | 不得引用效果数字 |
+## 竞赛差异化
 
-P0 没有正式测量 business success rate 和 overhead，演示产物会明确标记 `not_evaluated`。一页项目说明、简历表述和证据边界见 [项目一页说明](docs/research/career/project-one-pager.md) 与 [P0 证据卡](docs/research/stages/p0-evidence-card.md)。
+Sentinel-Guardian 不是普通问答、检索或报表 Agent，而是让一个智能体自主完成另一个
+智能体的安全验收。
 
-## 研究主循环
+它同时展示赛题要求的：
 
-```text
-Agent 物料/配置
-  -> 证据约束画像
-  -> 攻击候选生成与选择
-  -> 隔离执行与轨迹记录
-  -> 多视角风险评测与节点归因
-  -> 防御候选生成与选择
-  -> 回归评测
-  -> 下一轮协同进化或满足停止条件
-```
+| 赛题能力 | Sentinel-Guardian 对应实现 |
+|---|---|
+| 复杂任务理解 | 解析 Agent 源码、配置、工具、权限、正常任务和安全目标 |
+| 任务规划 | 生成受 schema 约束的安全测试计划 |
+| 环境感知 | 记录 LLM、文件、网络、工具、状态和 Guard 事件 |
+| 自主决策 | 选择测试 case、防御节点、停止条件和上线结论 |
+| 环境行动 | 从冻结源码构建 Docker/OpenManus 沙箱副本并执行工具和攻击 |
+| 数据分析 | 计算 ASR、FPR、clean utility、失败归因和风险节点 |
+| 场景决策 | 输出允许上线、修复复测、禁止上线或人工审批 |
 
-核心原则：
-
-- 输入证据优先，LLM 分析只产生候选，不覆盖缺少证据的事实。
-- 环境失败、业务失败和安全失败分开归因。
-- 论文数字必须来自结构化实验产物，禁止手填最终指标。
-- 固定 seed 的离线路径可重放；外部模型实验完整记录不可控因素。
-- 攻击效果、误伤、业务效用和运行成本共同评估。
-
-## 研究问题
-
-- **RQ1**：画像与历史轨迹驱动的攻击进化能否提高风险覆盖率和有效 ASR？
-- **RQ2**：双边协同进化是否优于静态攻防、仅攻击进化和仅防御优化？
-- **RQ3**：节点归因与轨迹风险信号能否降低误伤并提高防御定位效率？
-- **RQ4**：方法能否迁移到不同 Agent 架构、模型和工具集合？
-- **RQ5**：协同进化如何收敛，轮数、成本、覆盖和鲁棒性之间是什么关系？
-
-当前创新候选包括证据约束协同进化、多视角轨迹判定与精准归因、效用约束的自适应防御。它们是待实验验证的研究方向，不是预设论文结论。
-
-## 能力状态
+## 当前状态
 
 | 能力 | 状态 | 说明 |
 |---|---|---|
-| 核心领域契约与模块协议 | 稳定 | 版本化模型、显式转换器、依赖门禁 |
-| 单轮离线研究执行器 | 稳定 | seed、预算、逐 case 结果、失败归因 |
-| 协同进化状态机 | 实验性 | 九阶段状态、种群选择、停止条件、ledger |
-| 四类研究基线与消融 | 实验性 | 固定、单边、双边；五类消融开关 |
-| 数据集 manifest 与哈希校验 | 稳定 | 来源、许可证、版本、划分和泄漏防护 |
-| RQ1-RQ5 实验矩阵 | 实验性 | smoke/formal 配置和成本上限 |
-| 多 seed 统计与论文图表 | 实验性 | CI、效应量、置换检验、可追溯图表 |
-| OpenManus 真实运行 | 环境依赖 | 需要 Docker 和外部模型凭据 |
-| Product API 与 dashboard | 演示 | 本地研究成果展示，不是 SaaS |
-| AutoGen backend | 规划中 | 仅保留 scaffold，不可运行 |
+| 镜像 Agent 接入 | 已实现 | 从同级 `agents/` 增量索引离线 Docker/OCI 制品 |
+| Agent 镜像画像 | 已实现 | 从镜像配置、文件系统、框架和静态数据流生成证据闭合画像 |
+| Source-only 兼容接入 | 已实现 | API 兼容入口冻结源码和构建清单 SHA-256 |
+| 攻击生成与升级 | 已实现 | 支持画像、历史失败和策略反思 |
+| Docker 隔离执行 | 已实现 | 支持真实 OpenManus runtime |
+| 轨迹记录与失败归因 | 已实现 | 区分环境失败、模型拒答、攻击效果和 Guard 拦截 |
+| 风险评测与节点定位 | 已实现 | 逐 case 结果、Oracle、trajectory 和 attribution |
+| 局部防御与回归 | 已实现 | 生成 Guard 并执行 baseline/guarded 配对 |
+| Manifest 与证据索引 | 已实现 | provenance、raw trajectory、evidence index |
+| 统一审计任务契约 | 核心完成 | `AuditTask`、`AuditPlan`、`ReleaseDecision` |
+| LLM 结构化自主规划 | 核心与页面完成 | 计划实际决定 case、预算和执行顺序 |
+| 多轮闭环编排 | 已完成 | 静态画像、预测节点、攻击结果、失效节点、防御和下一轮反馈 |
+| 企业知识助手案例 | 已完成 | 合成业务数据、四类攻击、局部 Guard 和正式审计 |
+| C5 审计工作区 | 已完成 | 展示资产、时间线、轨迹、评分、四态决策和证据引用 |
 
-## 目录导航
+## 当前证据
+
+默认工程回归：
 
 ```text
-src/redsentinel/
-  core/          # 稳定领域模型、协议、转换器和依赖规则
-  profiling/     # Agent 物料、静态分析、候选画像和证据校验
-  attacks/       # 攻击空间、生成、变异、选择和数据加载
-  defenses/      # guards、policy、mounting、optimization、audit
-  evaluation/    # detector、oracle、metrics、attribution、paired evaluation
-  research/      # 单轮执行、协同进化、基线、RQ、统计和 provenance
-  runtime/       # sandbox、telemetry、replay、Docker capture
-  adapters/      # OpenManus、HTTP、SDK、LangGraph、direct API
-  reporting/     # 结构化结果、HTML 和论文证据导出
-configs/         # Agent、benchmark、实验和进化配置
-datasets/        # manifest 与小型 fixture；大型数据不入 Git
-tests/           # unit、contract、integration、research、regression
-research/        # 研究协议、资产审计和论文设计资料
-frontend/        # 可选研究 dashboard
-docs/            # 架构、研究、指南、API 和历史归档
-artifacts/       # 默认实验输出目录，不提交 Git
+1061 passed, 2 deselected
+Ruff passed
 ```
 
-旧 `auto_*_system`、`agent_integration_system`、独立 SDK 包和根 runner 已完成迁移并删除。
-正式 Python 实现统一位于 `src/redsentinel/`；历史规范与报告统一收录在
-`docs/archive/`，不参与当前运行时依赖。
+OpenManus W2 rerun10 真实运行门禁：
 
-## 快速开始
+- 15/15 Docker 进程成功，runtime failure rate 0%
+- 五个适用 baseline 均产生注册攻击 effect
+- 五个 guarded 运行均成功阻断
+- baseline/guarded 可比完整度 5/5
+- baseline ASR 100%，guarded ASR 0%
+- clean utility 100%，FPR 0%
+- manifest、provenance、trajectory 和 evidence index 完整
 
-推荐 Python 3.10。
+边界：
+
+- 当前真实证据只覆盖一个 Agent、一个模型、一个 seed
+- OpenManus 缺少等价邮件工具，场景适用范围为 5/6
+- 历史离线协同进化结果只用于比赛演示与工程回归
+
+## 当前比赛主线
+
+```text
+C0 统一口径              已完成
+C1 审计任务契约          核心完成
+C2 自主测试规划          核心与计划页面完成
+C3 攻击-加固-复测编排    已完成
+C4 企业知识助手案例      已完成
+C5 竞赛产品展示          已完成
+C6 提交与演示验收        待启动
+```
+
+详细任务、验收条件和非目标见 [竞赛 Roadmap](ROADMAP.md)。
+
+当前开发焦点不是扩展更多攻击类别或 Agent 框架，而是把已有底层能力收敛成一个
+用户可以直接触发、全过程可观察、最终能够做出上线决策的自主任务。
+
+## 五分钟离线演示
+
+安装：
 
 ```bash
 python -m pip install -e ".[all,dev]"
-redsentinel doctor --dry-run
 ```
 
-查看统一 CLI：
+运行：
+
+```bash
+redsentinel demo --output-dir artifacts --seed 42
+```
+
+现有兼容演示会执行：
+
+```text
+doctor -> profile -> paired evaluation -> defense loop -> evidence summary
+```
+
+主要输出为 `artifacts/p0-demo/p0-demo-summary-v1.json`。该入口用于验证底层链路；
+比赛最终入口将收敛为单一 `audit` 命令。
+
+## CLI
 
 ```bash
 redsentinel --help
 redsentinel demo --help
 redsentinel profile --help
 redsentinel evaluate --help
-redsentinel evolve --help
-redsentinel experiment --help
 redsentinel report --help
 redsentinel-agent --help
 redsentinel-defense --help
 redsentinel-openmanus --help
 ```
 
-验证 Agent 配置但不运行：
+验证 Agent 配置：
 
 ```bash
 redsentinel profile \
@@ -135,104 +195,158 @@ redsentinel profile \
   --dry-run
 ```
 
-查看 RQ 实验矩阵：
-
-```bash
-redsentinel experiment --dry-run
-redsentinel experiment --rq RQ2
-```
-
-运行确定性离线单轮评测：
+运行确定性离线评测：
 
 ```bash
 redsentinel evaluate --output-dir artifacts --seed 42
 ```
 
-运行离线协同进化证据 smoke：
-
-```bash
-redsentinel evolve --output-dir artifacts --seed 42
-```
-
-正式论文实验应使用 [`configs/experiments/rq-matrix-v1.yaml`](configs/experiments/rq-matrix-v1.yaml) 和 [`docs/guides/experiments.md`](docs/guides/experiments.md) 中的协议，不应直接把 demo 指标作为论文结论。
-
-## 运行模式
-
-| 模式 | 含义 | 证据用途 |
-|---|---|---|
-| `offline_fixture` | 固定输入和确定性响应 | 单元、回归、算法 smoke |
-| `simulated_runtime` | 本地模拟 Agent/工具行为 | 工程集成和受控实验 |
-| `real_runtime` | 真实 Agent 框架执行 | 运行时有效性证据 |
-| `external_model` | 调用外部模型服务 | 论文实验，必须记录模型与参数 |
-
-完整指标和证据准入规则见 [`research/protocols/metrics-and-evidence.md`](research/protocols/metrics-and-evidence.md)。
-
-## 测试
-
-默认快速测试覆盖正式研究包、迁移后的回归测试、前端和 experiments，不需要 Docker、网络或 API key：
-
-```bash
-python -m pytest -q
-```
-
-执行完整离线测试：
-
-```bash
-python -m pytest -q -o addopts=''
-```
-
-按层或环境运行：
-
-```bash
-python -m pytest -q -m contract
-python -m pytest -q -m research
-python -m pytest -q -m docker
-python -m pytest -q -m external_model
-```
-
-静态检查：
-
-```bash
-python -m ruff check . --select F401,F841,F821,F811
-```
-
-## 可选 Product API 与 dashboard
+## 可选审计工作区
 
 ```bash
 export RED_SENTINEL_JWT_SECRET="replace-with-a-random-secret-at-least-32-chars"
+export RED_SENTINEL_PLANNER_API_KEY="replace-with-planner-key"
+export RED_SENTINEL_PLANNER_BASE_URL="https://api.example.com/v1"
+export RED_SENTINEL_PLANNER_MODEL="planner-model"
 python -m uvicorn redsentinel.apps.api:create_app \
   --factory --host 127.0.0.1 --port 8000
 ```
 
-打开 `http://127.0.0.1:8000/`。FastAPI 路由通过公开 application facade 调用研究/应用服务；dashboard 只消费结构化报告，不定义另一套指标。
+打开 `http://127.0.0.1:8000/`。
 
-生产或共享环境不得使用开发 JWT 密钥。当前存储、认证和 dashboard 仍是本地研究演示边界。
+Planner 三个环境变量全部缺失时使用确定性回退；部分配置会被拒绝。真实调用只保存模型、
+provider host、延迟、token usage、Prompt SHA-256 和响应 SHA-256，不保存 Prompt 正文或
+凭据。证据写入当前租户的 `audits/<audit_id>/planner-call.json` 并进入 evidence index。
+
+P1 双模型真实实验使用独立模型槽，避免覆盖被测 Agent 的默认配置：
+
+```bash
+export RED_SENTINEL_MODEL_A_API_KEY="..."
+export RED_SENTINEL_MODEL_A_BASE_URL="https://provider-a.example/v1"
+export RED_SENTINEL_MODEL_A_MODEL="model-a"
+export RED_SENTINEL_MODEL_B_API_KEY="..."
+export RED_SENTINEL_MODEL_B_BASE_URL="https://provider-b.example/v1"
+export RED_SENTINEL_MODEL_B_MODEL="model-b"
+redsentinel-competition-matrix
+```
+
+矩阵固定为 2 个模型、seeds `101/211/307` 和 4 个企业知识助手场景。结果写入
+`artifacts/competition-p1/competition-p1-openmanus-2x3x4-v1/`；重复执行会跳过已完成
+cell，仅重试失败或环境跳过的 cell。凭据缺失时输出 `environment_failure` 跳过证据，
+不得把该结果计入 ASR、FPR 或 clean utility。
+
+当前页面已经提供完整 C5 审计工作区：
+
+```text
+提交审计
+  -> 查看资产理解
+  -> 查看测试计划
+  -> 跟踪执行轨迹
+  -> 查看风险节点和防御
+  -> 对比复测结果
+  -> 获取上线建议
+```
+
+工作区支持创建审计、选择当前租户审计、查看资产画像、审阅攻击集、阶段进度、baseline/guarded
+结果、逐攻击预测节点与失效节点、安全评分、统一时间线、LLM/工具/文件/网络/Guard
+轨迹、四态决策和证据哈希。攻击计划必须经用户确认后才会执行；完成一轮后可生成并
+审阅反馈驱动的下一轮攻击集。
+轨迹由后端在租户目录边界内读取并生成限长、敏感键脱敏的摘要，不向浏览器无边界透传
+任意证据文件。
+
+选择 OpenManus 时，页面自动使用 `openmanus_real` 和 OpenManus benchmark，并要求
+分别配置被测、攻击、防御 Agent 的模型 API 地址、模型名和 API Key。每项配置必须通过
+真实连接测试后才能启动审计。配置既可在新建审计中完成，也可从侧栏“模型配置”集中
+管理。凭据只保存在当前 App 进程，不进入任务和报告。
+
+桌面主路径的 Agent 目录契约为：
+
+```text
+agents/<目录>/agent.json
+agents/<目录>/image.tar
+```
+
+目录名可使用中文，`agent_id` 必须是稳定 ASCII 标识。`agent.json` 声明镜像类型、
+相对路径、可选平台与预期框架；描述文件摘要与归档实际 SHA-256 不一致时拒绝索引。
+列表严格映射该目录，不回退到应用内部隐藏资产。
+
+打开 Agent 详情后，先触发画像，再轮询状态并读取发布画像：
+
+```text
+POST /v1/agents/{agent_id}/profiles
+GET  /v1/agents/{agent_id}/profiles/{analysis_id}/status
+GET  /v1/agents/{agent_id}/profiles/latest
+```
+
+画像发布时同时生成最小化 `attack-profile-v0.1` 和基于风险路径的 AttackSpec。攻击
+规划只消费 `verified/supported` 风险路径；审计创建和恢复均校验
+`image_digest`、`profile_id` 和 `profile_sha256` 三元绑定，镜像或画像漂移时必须
+创建新审计版本。
+
+源码兼容接入契约为：
+
+```text
+source_path
+build_manifest_path  # agent-sandbox-build-v0.1 JSON，必须位于 source_path 内
+```
+
+Onboarding 会计算 `source_sha256`、`build_manifest_sha256` 和
+`source_snapshot_sha256`。审计开始和恢复时都会重新校验快照；源码发生变化必须创建
+新的审计版本。baseline 和 guarded 评测始终绑定同一个源码快照。
+
+生产或共享环境不得使用开发 JWT 密钥。
+
+## 代码导航
+
+```text
+src/redsentinel/
+  core/          # 领域模型、协议和转换器
+  profiling/     # Agent 物料、源码分析和风险画像
+  attacks/       # 攻击生成、变异、选择和数据加载
+  defenses/      # Guard、策略、挂载和自动加固
+  evaluation/    # Oracle、指标、轨迹风险和节点归因
+  runtime/       # sandbox、telemetry、replay 和 Docker capture
+  adapters/      # OpenManus、HTTP、SDK、LangGraph 和 Direct API
+  application/   # 审计应用服务和本地 API
+  reporting/     # 结构化报告、HTML 和证据导出
+frontend/        # 审计工作区
+configs/         # Agent、场景和运行配置
+datasets/        # fixture、manifest 和数据划分
+tests/           # unit、contract、integration 和 regression
+docs/competition # 竞赛报告、答辩稿、复现和提交清单
+```
+
+`src/redsentinel/research/`、`research/`、`configs/experiments/` 和 `docs/research/`
+暂时保留为历史算法与证据资产，避免破坏测试和已有 artifact。它们不再属于当前开发
+路线，只有竞赛闭环直接依赖时才修改。
+
+## 验证
+
+```bash
+python -m pytest -q
+python -m ruff check . --select F401,F841,F821,F811
+git diff --check
+```
 
 ## 文档
 
-- [架构与依赖](docs/architecture/research-framework.md)
-- [实验与复现指南](docs/guides/experiments.md)
-- [数据集治理](docs/guides/datasets.md)
-- [Agent 与 runtime 适配](docs/guides/adapters.md)
-- [稳定 Public API 与文档门禁](docs/api/public-api.md)
-- [贡献指南](docs/guides/contributing.md)
-- [术语表](docs/research/glossary.md)
-- [研究 Roadmap](ROADMAP.md)
-- [P0 阶段计划](docs/research/stages/p0-plan.md)
-- [求职项目定位](docs/research/career/project-positioning.md)
-- [面试问题与证据边界](docs/research/career/interview-guide.md)
-- [OpenManus 真实运行预演](docs/research/demo/openmanus-preflight.md)
-- [历史比赛与产品路线索引归档](docs/archive/legacy-competition-product-roadmap.md)
+- [竞赛 Roadmap](ROADMAP.md)
+- [竞赛资料入口](docs/competition/README.md)
+- [竞赛项目报告](docs/competition/final-report.md)
+- [8 分钟答辩稿](docs/competition/defense-script-8min.md)
+- [复现说明](docs/competition/reproducibility.md)
+- [提交检查清单](docs/competition/submission-checklist.md)
+- [产品口径与边界](docs/product/README.md)
+- [C1-C4 代码审计与整改记录](docs/product/c1-c4-code-audit.md)
 
-## 安全与研究边界
+## 安全边界
 
-- 所有攻击只能作用于授权、本地或明确隔离的目标。
-- 不连接真实支付、真实企业数据或未授权外部系统。
-- 原始 API key 不写入 manifest、报告、日志或 provenance。
-- `offline_fixture` 和 `simulated_runtime` 结果不能冒充真实 Agent 证据。
-- 真实 OpenManus 结果必须标记 `real_runtime=true` 且 `simulated=false`。
-- 研究结论必须报告数据划分、seed、模型、成本和适用威胁。
+- 所有攻击只能作用于授权、本地或明确隔离的目标
+- 不连接真实支付、真实企业数据或未授权外部系统
+- API key 不写入 manifest、报告、日志或 provenance
+- 环境失败、模型拒答和 Guard 拦截必须分别统计
+- 自动上线建议不能绕过企业已有人工审批和责任边界
 
 ## 许可证
 
-项目采用 Apache-2.0。第三方 OpenManus 等依赖保留其固定版本、许可证和来源信息。
+Apache-2.0

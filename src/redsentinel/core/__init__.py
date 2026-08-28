@@ -17,6 +17,7 @@ from redsentinel.core.models import (
     Trajectory,
     TrajectoryStep,
 )
+from redsentinel.core.profile_evidence import EvidenceLocator, EvidenceMethod, ProfileEvidence
 
 __all__ = [
     "AgentProfile",
@@ -26,11 +27,14 @@ __all__ = [
     "DefenseCandidate",
     "EvaluationCaseResult",
     "EvaluationResult",
+    "EvidenceLocator",
+    "EvidenceMethod",
     "EvidenceRef",
     "EvolutionStage",
     "EvolutionState",
     "ExperimentManifest",
     "Provenance",
+    "ProfileEvidence",
     "Trajectory",
     "TrajectoryStep",
     "agent_profile_from_legacy",

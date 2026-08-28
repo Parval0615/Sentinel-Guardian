@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Literal
 
@@ -54,7 +55,7 @@ class OpenManusAttackPack(BaseModel):
 
 def default_attack_pack_path() -> Path:
     return (
-        Path(__file__).resolve().parents[4]
+        _resource_root()
         / "configs"
         / "scenarios"
         / "ecommerce"
@@ -62,9 +63,22 @@ def default_attack_pack_path() -> Path:
     )
 
 
+def _resource_root() -> Path:
+    configured = os.environ.get("RED_SENTINEL_RESOURCE_ROOT")
+    root = (
+        Path(configured).expanduser().resolve()
+        if configured
+        else Path(__file__).resolve().parents[4]
+    )
+    if (root / "configs").is_dir():
+        return root
+    resources = root / "Resources"
+    return resources if (resources / "configs").is_dir() else root
+
+
 def default_openmanus_attack_pack_path() -> Path:
     return (
-        Path(__file__).resolve().parents[4]
+        _resource_root()
         / "configs"
         / "scenarios"
         / "openmanus"

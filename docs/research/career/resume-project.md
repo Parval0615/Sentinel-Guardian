@@ -64,7 +64,7 @@ AgentProfile
 
 | 结果 | 数值 | 运行模式 | 可使用范围 |
 |---|---:|---|---|
-| 默认离线测试 | 752 passed | offline_fixture | 简历、面试 |
+| 默认全量测试 | 778 passed | 本地默认测试 | 简历、面试 |
 | 单轮 smoke | 3/3 passed | offline_fixture | 简历工程验证 |
 | 协同进化 smoke | ASR 43.75% -> 0% | offline_fixture | 说明链路，不作真实效果结论 |
 | 基线/消融 | 4 arms / 5 switches | offline_fixture | 说明实验能力 |
@@ -85,7 +85,7 @@ AgentProfile
 
 | 结论 | 证据等级 | 证据路径 | 状态 |
 |---|---|---|---|
-| 默认测试 752 passed | E2 工程回归 | `docs/research/stages/p0-evidence-card.md` | 可用 |
+| 默认测试 778 passed | E2 工程回归 | 当前 `python -m pytest -q` | 可用 |
 | 单轮 3/3 | E2 离线集成 | `artifacts/p0-demo/` 及 P0 证据卡 | 可用，须标离线 |
 | ASR 43.75% -> 0% | E2 离线算法 smoke | evolution evidence index | 可讲链路，不可作真实效果 |
 | 四类基线/五类消融可运行 | E2 离线研究 | baseline/ablation tests | 可用 |

@@ -1,0 +1,21 @@
+{
+  "schema_version": "agent-directory-v0.1",
+  "agent_id": "openmanus",
+  "name": "OpenManus Agent",
+  "image": {
+    "type": "docker_archive",
+    "path": "image.tar",
+    "digest": "sha256:4f527891715b7d493427d6da72233f3a84a58d94e89c6b0ae4ac86d1a43154d1"
+  },
+  "platform": "linux/arm64",
+  "runtime": {
+    "requires_privileged": false,
+    "required_host_mounts": [],
+    "probe_module": "redsentinel_runtime.profile_probe_entry"
+  },
+  "expected_frameworks": [
+    "OpenManus",
+    "MCP"
+  ],
+  "notes": "OpenManus runtime built for linux/arm64 from infra/openmanus/Dockerfile with python:3.12-slim-bookworm pinned at sha256:a116514e19457bcb7af7efe9c3dd0b9b71e85b317694e7882a1c52aa15a78134."
+}

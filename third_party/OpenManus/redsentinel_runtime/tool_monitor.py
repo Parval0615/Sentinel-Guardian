@@ -78,7 +78,13 @@ def monitor_payload_for_tool(tool_name: str, arguments: dict[str, Any]) -> tuple
     )
 
 
-def evaluate_tool(tool_name: str, arguments: dict[str, Any], *, defense_mode: str) -> dict[str, Any]:
+def evaluate_tool(
+    tool_name: str,
+    arguments: dict[str, Any],
+    *,
+    defense_mode: str,
+    active_guards: set[str] | None = None,
+) -> dict[str, Any]:
     call_type, payload = monitor_payload_for_tool(tool_name, arguments)
     normalized_tool = str(tool_name or "").lower()
     if normalized_tool in {"terminate", "ask_human"}:
@@ -92,15 +98,15 @@ def evaluate_tool(tool_name: str, arguments: dict[str, Any], *, defense_mode: st
             "payload": payload,
         }
     if defense_mode == "baseline":
-        return {
-            "decision": "allow",
-            "reason": "baseline_no_defense",
-            "risk_score": 0.0,
-            "confidence": 1.0,
-            "rules": ["baseline.no_defense"],
-            "call_type": call_type,
-            "payload": payload,
-        }
+        return _allow_without_guard(call_type, payload, "baseline_no_defense")
+    if active_guards is not None and not active_guards.intersection(
+        _guards_for_call_type(call_type)
+    ):
+        return _allow_without_guard(
+            call_type,
+            payload,
+            "remediation_guard_not_installed",
+        )
 
     if normalized_tool == "python_execute" and _python_accesses_metadata(arguments):
         return {
@@ -133,7 +139,168 @@ def evaluate_tool(tool_name: str, arguments: dict[str, Any], *, defense_mode: st
     return data
 
 
-def evaluate_prompt(message: str, *, defense_mode: str) -> dict[str, Any]:
+def _guards_for_call_type(call_type: str) -> set[str]:
+    return {
+        "llm_input": {"input_firewall", "goal_guard", "monitor_policy"},
+        "code_execution": {
+            "tool_policy",
+            "file_policy",
+            "network_policy",
+            "monitor_policy",
+        },
+        "file_access": {"file_policy", "tool_policy", "monitor_policy"},
+        "tool_call": {
+            "tool_policy",
+            "network_policy",
+            "permission_guard",
+            "monitor_policy",
+        },
+    }.get(call_type, {"monitor_policy"})
+
+
+def _allow_without_guard(
+    call_type: str,
+    payload: dict[str, Any],
+    reason: str,
+) -> dict[str, Any]:
+    return {
+        "decision": "allow",
+        "reason": reason,
+        "risk_score": 0.0,
+        "confidence": 1.0,
+        "rules": [
+            "baseline.no_defense"
+            if reason == "baseline_no_defense"
+            else "remediation.guard_not_installed"
+        ],
+        "call_type": call_type,
+        "payload": payload,
+    }
+
+
+def _guards_for_call_type(call_type: str) -> set[str]:
+    return {
+        "llm_input": {"input_firewall", "goal_guard", "monitor_policy"},
+        "code_execution": {
+            "tool_policy",
+            "file_policy",
+            "network_policy",
+            "monitor_policy",
+        },
+        "file_access": {"file_policy", "tool_policy", "monitor_policy"},
+        "tool_call": {
+            "tool_policy",
+            "network_policy",
+            "permission_guard",
+            "monitor_policy",
+        },
+    }.get(call_type, {"monitor_policy"})
+
+
+def _allow_without_guard(
+    call_type: str,
+    payload: dict[str, Any],
+    reason: str,
+) -> dict[str, Any]:
+    return {
+        "decision": "allow",
+        "reason": reason,
+        "risk_score": 0.0,
+        "confidence": 1.0,
+        "rules": [
+            "baseline.no_defense"
+            if reason == "baseline_no_defense"
+            else "remediation.guard_not_installed"
+        ],
+        "call_type": call_type,
+        "payload": payload,
+    }
+
+
+def _guards_for_call_type(call_type: str) -> set[str]:
+    return {
+        "llm_input": {"input_firewall", "goal_guard", "monitor_policy"},
+        "code_execution": {
+            "tool_policy",
+            "file_policy",
+            "network_policy",
+            "monitor_policy",
+        },
+        "file_access": {"file_policy", "tool_policy", "monitor_policy"},
+        "tool_call": {
+            "tool_policy",
+            "network_policy",
+            "permission_guard",
+            "monitor_policy",
+        },
+    }.get(call_type, {"monitor_policy"})
+
+
+def _allow_without_guard(
+    call_type: str,
+    payload: dict[str, Any],
+    reason: str,
+) -> dict[str, Any]:
+    return {
+        "decision": "allow",
+        "reason": reason,
+        "risk_score": 0.0,
+        "confidence": 1.0,
+        "rules": [
+            "baseline.no_defense"
+            if reason == "baseline_no_defense"
+            else "remediation.guard_not_installed"
+        ],
+        "call_type": call_type,
+        "payload": payload,
+    }
+
+
+def _guards_for_call_type(call_type: str) -> set[str]:
+    return {
+        "llm_input": {"input_firewall", "goal_guard", "monitor_policy"},
+        "code_execution": {
+            "tool_policy",
+            "file_policy",
+            "network_policy",
+            "monitor_policy",
+        },
+        "file_access": {"file_policy", "tool_policy", "monitor_policy"},
+        "tool_call": {
+            "tool_policy",
+            "network_policy",
+            "permission_guard",
+            "monitor_policy",
+        },
+    }.get(call_type, {"monitor_policy"})
+
+
+def _allow_without_guard(
+    call_type: str,
+    payload: dict[str, Any],
+    reason: str,
+) -> dict[str, Any]:
+    return {
+        "decision": "allow",
+        "reason": reason,
+        "risk_score": 0.0,
+        "confidence": 1.0,
+        "rules": [
+            "baseline.no_defense"
+            if reason == "baseline_no_defense"
+            else "remediation.guard_not_installed"
+        ],
+        "call_type": call_type,
+        "payload": payload,
+    }
+
+
+def evaluate_prompt(
+    message: str,
+    *,
+    defense_mode: str,
+    active_guards: set[str] | None = None,
+) -> dict[str, Any]:
     payload = {
         "tool_name": "prompt_input",
         "arguments": {"message": message},
@@ -141,15 +308,15 @@ def evaluate_prompt(message: str, *, defense_mode: str) -> dict[str, Any]:
         "source": "openmanus_real_runner",
     }
     if defense_mode == "baseline":
-        return {
-            "decision": "allow",
-            "reason": "baseline_no_defense",
-            "risk_score": 0.0,
-            "confidence": 1.0,
-            "rules": ["baseline.no_defense"],
-            "call_type": "llm_input",
-            "payload": payload,
-        }
+        return _allow_without_guard("llm_input", payload, "baseline_no_defense")
+    if active_guards is not None and not active_guards.intersection(
+        _guards_for_call_type("llm_input")
+    ):
+        return _allow_without_guard(
+            "llm_input",
+            payload,
+            "remediation_guard_not_installed",
+        )
 
     from redsentinel.defenses.engine.monitor_plugin import intercept
 

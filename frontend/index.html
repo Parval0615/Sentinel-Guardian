@@ -1897,6 +1897,50 @@
       font-size: 12px;
     }
 
+    .audit-workspace-field textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+
+    .audit-workspace-create-actions {
+      display: flex;
+      align-items: end;
+      justify-content: flex-end;
+    }
+
+    .audit-workspace-field textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+
+    .audit-workspace-create-actions {
+      display: flex;
+      align-items: end;
+      justify-content: flex-end;
+    }
+
+    .audit-workspace-field textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+
+    .audit-workspace-create-actions {
+      display: flex;
+      align-items: end;
+      justify-content: flex-end;
+    }
+
+    .audit-workspace-field textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+
+    .audit-workspace-create-actions {
+      display: flex;
+      align-items: end;
+      justify-content: flex-end;
+    }
+
     .node-marker.bypassed {
       background: var(--color-danger-soft);
       border-color: rgba(154, 92, 80, 0.24);
@@ -3797,6 +3841,867 @@
       font-weight: 400 !important;
     }
 
+    .audit-plan-section {
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, rgba(255, 252, 247, 0.98), rgba(239, 233, 222, 0.76));
+    }
+
+    .audit-plan-section::before {
+      content: "";
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      top: -190px;
+      right: -90px;
+      border: 1px solid rgba(31, 42, 36, 0.10);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 44px rgba(31, 42, 36, 0.025),
+        0 0 0 88px rgba(31, 42, 36, 0.018);
+      pointer-events: none;
+    }
+
+    .audit-plan-header {
+      position: relative;
+      align-items: flex-start;
+    }
+
+    .audit-plan-kicker {
+      margin-bottom: 8px;
+      color: var(--color-warning);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .audit-plan-title {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 4vw, 46px);
+      font-weight: 400;
+      line-height: 1.04;
+      letter-spacing: -0.035em;
+    }
+
+    .audit-plan-intro {
+      max-width: 680px;
+      margin-top: 12px;
+      color: var(--color-foreground-muted);
+      font-size: 13px;
+      line-height: 1.75;
+    }
+
+    .audit-plan-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 7px 12px;
+      border: 1px solid var(--color-border);
+      border-radius: 999px;
+      background: rgba(255, 252, 247, 0.76);
+      color: var(--color-foreground-muted);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .audit-plan-state::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--color-warning);
+      box-shadow: 0 0 0 4px var(--color-warning-soft);
+    }
+
+    .audit-plan-loader {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding: 14px;
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-lg);
+      background: rgba(255, 252, 247, 0.72);
+    }
+
+    .audit-plan-loader label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--color-foreground-muted);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .audit-plan-loader input {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--color-foreground);
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    .audit-plan-status {
+      position: relative;
+      min-height: 20px;
+      margin-bottom: 16px;
+      color: var(--color-foreground-muted);
+      font-size: 12px;
+    }
+
+    .audit-plan-status.error { color: var(--color-danger); }
+    .audit-plan-status.success { color: var(--color-success); }
+
+    .audit-plan-empty {
+      position: relative;
+      padding: 52px 24px;
+      border: 1px dashed var(--color-border);
+      border-radius: var(--radius-xl);
+      background: rgba(255, 252, 247, 0.52);
+      text-align: center;
+    }
+
+    .audit-plan-empty-index {
+      color: var(--color-border);
+      font-family: var(--font-display);
+      font-size: 72px;
+      line-height: 1;
+    }
+
+    .audit-plan-empty strong {
+      display: block;
+      margin-top: -18px;
+      font-size: 15px;
+      font-weight: 650;
+    }
+
+    .audit-plan-empty p {
+      margin-top: 8px;
+      color: var(--color-foreground-muted);
+      font-size: 12px;
+    }
+
+    .audit-plan-summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      background: var(--color-border);
+    }
+
+    .audit-plan-summary-item {
+      min-height: 88px;
+      padding: 16px;
+      background: rgba(255, 252, 247, 0.92);
+    }
+
+    .audit-plan-summary-label {
+      color: var(--color-foreground-subtle);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .audit-plan-summary-value {
+      margin-top: 8px;
+      color: var(--color-foreground);
+      font-size: 16px;
+      font-weight: 650;
+      letter-spacing: -0.03em;
+      overflow-wrap: anywhere;
+    }
+
+    .audit-plan-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.65fr) minmax(260px, 0.75fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .audit-plan-column,
+    .audit-policy-column {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      background: rgba(255, 252, 247, 0.82);
+    }
+
+    .audit-plan-column {
+      padding: 20px;
+    }
+
+    .audit-policy-column {
+      position: sticky;
+      top: 18px;
+      overflow: hidden;
+    }
+
+    .audit-plan-column-title,
+    .audit-policy-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .audit-plan-column-copy {
+      margin-top: 4px;
+      color: var(--color-foreground-muted);
+      font-size: 11px;
+    }
+
+    .audit-plan-list {
+      margin-top: 20px;
+      counter-reset: audit-plan-item;
+    }
+
+    .audit-plan-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 14px;
+      padding-bottom: 22px;
+      counter-increment: audit-plan-item;
+    }
+
+    .audit-plan-item:last-child {
+      padding-bottom: 0;
+    }
+
+    .audit-plan-item::before {
+      content: "";
+      position: absolute;
+      top: 38px;
+      bottom: 0;
+      left: 18px;
+      width: 1px;
+      background: var(--color-border);
+    }
+
+    .audit-plan-item:last-child::before {
+      display: none;
+    }
+
+    .audit-plan-number {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--color-accent);
+      border-radius: 50%;
+      background: var(--color-accent);
+      color: white;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .audit-plan-card {
+      padding: 16px;
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface-elevated);
+      transition: transform var(--transition-base), border-color var(--transition-base);
+    }
+
+    .audit-plan-card:hover {
+      transform: translateY(-1px);
+      border-color: rgba(31, 42, 36, 0.30);
+    }
+
+    .audit-plan-card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .audit-plan-scenario {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .audit-plan-priority {
+      padding: 4px 7px;
+      border-radius: 999px;
+      background: var(--color-warning-soft);
+      color: var(--color-warning);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .audit-plan-rationale {
+      margin-top: 10px;
+      color: var(--color-foreground-muted);
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    .audit-plan-meta,
+    .audit-plan-evidence {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .audit-plan-chip {
+      padding: 5px 8px;
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 999px;
+      background: var(--color-surface-muted);
+      color: var(--color-foreground-muted);
+      font-family: var(--font-mono);
+      font-size: 9px;
+    }
+
+    .audit-plan-chip.evidence {
+      background: var(--color-info-soft);
+      color: var(--color-info);
+    }
+
+    .audit-policy-head {
+      padding: 18px 20px;
+      background: var(--color-accent);
+      color: white;
+    }
+
+    .audit-policy-source {
+      margin-top: 5px;
+      color: rgba(255, 255, 255, 0.62);
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+
+    .audit-policy-block {
+      padding: 16px 20px;
+      border-top: 1px solid var(--color-border-subtle);
+    }
+
+    .audit-policy-label {
+      color: var(--color-foreground-subtle);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .audit-policy-list {
+      display: grid;
+      gap: 9px;
+      margin-top: 10px;
+      list-style: none;
+    }
+
+    .audit-policy-list li {
+      position: relative;
+      padding-left: 15px;
+      color: var(--color-foreground-muted);
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
+    .audit-policy-list li::before {
+      content: "";
+      position: absolute;
+      top: 7px;
+      left: 0;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--color-success);
+    }
+
+    .audit-policy-warning {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-left: 2px solid var(--color-warning);
+      background: var(--color-warning-soft);
+      color: var(--color-warning);
+      font-size: 10px;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 900px) {
+      .audit-plan-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .audit-plan-layout {
+        grid-template-columns: 1fr;
+      }
+      .audit-policy-column {
+        position: static;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .audit-plan-loader,
+      .audit-plan-summary {
+        grid-template-columns: 1fr;
+      }
+      .audit-plan-loader .primary-action {
+        width: 100%;
+      }
+      .audit-plan-item {
+        grid-template-columns: 32px minmax(0, 1fr);
+        gap: 10px;
+      }
+      .audit-plan-number {
+        width: 30px;
+        height: 30px;
+      }
+      .audit-plan-item::before {
+        top: 30px;
+        left: 14px;
+      }
+    }
+
+    .audit-workspace-section {
+      position: relative;
+      background: var(--color-surface);
+    }
+
+    .audit-workspace-kicker {
+      margin-bottom: 8px;
+      color: var(--color-info);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .audit-workspace-title {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 4vw, 46px);
+      font-weight: 400;
+      line-height: 1.04;
+      letter-spacing: -0.035em;
+    }
+
+    .audit-workspace-copy {
+      max-width: 720px;
+      margin-top: 12px;
+      color: var(--color-foreground-muted);
+      font-size: 13px;
+      line-height: 1.75;
+    }
+
+    .audit-workspace-state {
+      padding: 7px 12px;
+      border: 1px solid var(--color-border);
+      border-radius: 999px;
+      color: var(--color-foreground-muted);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .audit-workspace-create {
+      margin-bottom: 14px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface-elevated);
+    }
+
+    .audit-workspace-create summary {
+      padding: 13px 14px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .audit-workspace-create-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 0 14px 14px;
+    }
+
+    .audit-workspace-loader {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) minmax(200px, 1fr) auto;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 14px;
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface-muted);
+    }
+
+    .audit-workspace-field label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--color-foreground-muted);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .audit-workspace-field input,
+    .audit-workspace-field select,
+    .audit-workspace-field textarea {
+      width: 100%;
+      min-height: 34px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-surface-elevated);
+      color: var(--color-foreground);
+      padding: 7px 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    .audit-workspace-status {
+      min-height: 20px;
+      margin-bottom: 16px;
+      color: var(--color-foreground-muted);
+      font-size: 12px;
+    }
+
+    .audit-workspace-status.error { color: var(--color-danger); }
+    .audit-workspace-status.success { color: var(--color-success); }
+
+    .audit-workspace-empty {
+      padding: 48px 24px;
+      border: 1px dashed var(--color-border);
+      border-radius: var(--radius-xl);
+      color: var(--color-foreground-muted);
+      text-align: center;
+    }
+
+    .audit-workspace-empty strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--color-foreground);
+      font-size: 15px;
+    }
+
+    .audit-workspace-summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      overflow: hidden;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      background: var(--color-border);
+    }
+
+    .audit-workspace-summary-item {
+      min-height: 86px;
+      padding: 16px;
+      background: var(--color-surface-elevated);
+    }
+
+    .audit-workspace-summary-label,
+    .audit-workspace-card-label {
+      color: var(--color-foreground-subtle);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .audit-workspace-summary-value {
+      margin-top: 8px;
+      font-size: 16px;
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }
+
+    .audit-workspace-progress {
+      height: 5px;
+      margin-top: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--color-border-subtle);
+    }
+
+    .audit-workspace-progress span {
+      display: block;
+      height: 100%;
+      background: var(--color-accent);
+    }
+
+    .audit-workspace-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .audit-workspace-card {
+      min-width: 0;
+      padding: 18px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      background: var(--color-surface-elevated);
+    }
+
+    .audit-workspace-card.wide {
+      grid-column: 1 / -1;
+    }
+
+    .audit-workspace-card-title {
+      margin-top: 6px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .audit-workspace-list {
+      display: grid;
+      gap: 9px;
+      margin-top: 14px;
+      list-style: none;
+    }
+
+    .audit-workspace-row {
+      padding: 11px 12px;
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-md);
+      background: var(--color-surface-muted);
+      font-size: 11px;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+
+    .audit-workspace-row-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 4px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .audit-workspace-row-meta {
+      color: var(--color-foreground-muted);
+    }
+
+    .audit-workspace-pill {
+      display: inline-flex;
+      margin: 5px 5px 0 0;
+      padding: 4px 7px;
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 999px;
+      color: var(--color-foreground-muted);
+      font-family: var(--font-mono);
+      font-size: 9px;
+    }
+
+    .audit-workspace-decision {
+      margin-top: 12px;
+      padding: 14px;
+      border-left: 3px solid var(--color-warning);
+      background: var(--color-warning-soft);
+    }
+
+    .audit-workspace-decision.allow_release { border-left-color: var(--color-success); }
+    .audit-workspace-decision.block_release { border-left-color: var(--color-danger); }
+    .audit-workspace-decision.manual_review { border-left-color: var(--color-warning); }
+
+    .audit-workspace-decision strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 15px;
+    }
+
+    .audit-workspace-empty-row {
+      color: var(--color-foreground-muted);
+      font-size: 11px;
+    }
+
+    .audit-score-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .audit-score-row {
+      display: grid;
+      grid-template-columns: 100px minmax(0, 1fr) 62px;
+      gap: 12px;
+      align-items: center;
+      font-size: 10px;
+    }
+
+    .audit-score-track {
+      display: grid;
+      gap: 5px;
+    }
+
+    .audit-score-bar {
+      height: 7px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--color-border-subtle);
+    }
+
+    .audit-score-bar span {
+      display: block;
+      height: 100%;
+      background: var(--color-danger);
+    }
+
+    .audit-score-bar.guarded span {
+      background: var(--color-success);
+    }
+
+    .audit-score-values {
+      color: var(--color-foreground-muted);
+      font-family: var(--font-mono);
+      text-align: right;
+    }
+
+    .audit-timeline {
+      position: relative;
+      display: grid;
+      gap: 0;
+      margin-top: 14px;
+      padding-left: 18px;
+    }
+
+    .audit-timeline::before {
+      position: absolute;
+      top: 7px;
+      bottom: 7px;
+      left: 5px;
+      width: 1px;
+      background: var(--color-border);
+      content: "";
+    }
+
+    .audit-timeline-item {
+      position: relative;
+      padding: 0 0 14px 12px;
+      font-size: 11px;
+    }
+
+    .audit-timeline-item::before {
+      position: absolute;
+      top: 5px;
+      left: -16px;
+      width: 7px;
+      height: 7px;
+      border: 2px solid var(--color-surface-elevated);
+      border-radius: 50%;
+      background: var(--color-accent);
+      content: "";
+    }
+
+    .audit-timeline-meta {
+      color: var(--color-foreground-subtle);
+      font-family: var(--font-mono);
+      font-size: 9px;
+    }
+
+    .audit-trace-list {
+      display: grid;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .audit-trace {
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-md);
+      background: var(--color-surface-muted);
+    }
+
+    .audit-trace > summary {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .audit-trace-events {
+      display: grid;
+      gap: 8px;
+      padding: 0 12px 12px;
+    }
+
+    .audit-trace-event {
+      padding: 10px;
+      border-left: 2px solid var(--color-accent);
+      background: var(--color-surface-elevated);
+      font-size: 10px;
+    }
+
+    .audit-trace-event.guard_decision { border-left-color: var(--color-warning); }
+    .audit-trace-event.file_access,
+    .audit-trace-event.network_call { border-left-color: var(--color-danger); }
+
+    .audit-trace-event summary {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .audit-trace-event pre {
+      margin: 8px 0 0;
+      overflow: auto;
+      color: var(--color-foreground-muted);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 900px) {
+      .audit-workspace-loader,
+      .audit-workspace-create-grid,
+      .audit-workspace-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .audit-workspace-loader .primary-action {
+        align-self: end;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .audit-workspace-loader,
+      .audit-workspace-summary,
+      .audit-workspace-grid {
+        grid-template-columns: 1fr;
+      }
+      .audit-workspace-card.wide {
+        grid-column: auto;
+      }
+      .audit-workspace-loader .primary-action {
+        width: 100%;
+      }
+      .audit-score-row {
+        grid-template-columns: 72px minmax(0, 1fr) 52px;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -3824,14 +4729,14 @@
 
     <section class="home-shell home-hero" id="home-hero" aria-labelledby="home-hero-title">
       <div>
-        <div class="home-eyebrow"><span class="home-eyebrow-dot" aria-hidden="true"></span>Real-time Agent Security Ops</div>
+        <div class="home-eyebrow"><span class="home-eyebrow-dot" aria-hidden="true"></span>Autonomous Agent Security Audit</div>
         <h1 class="home-hero-title" id="home-hero-title">Agent 风险，一目了然<span>。</span></h1>
         <p class="home-hero-copy">
           接入被测 Agent，运行安全评测，查看告警、报告和下一轮建议。信息克制，链路清楚。
         </p>
         <div class="home-hero-actions" aria-label="首页关键操作">
           <a class="home-button home-button-primary" id="home-hero-register-link" href="#register">立即注册</a>
-          <a class="home-button home-button-secondary" id="home-hero-workspace-link" href="#product-workspace">进入产品工作区</a>
+          <a class="home-button home-button-secondary" id="home-hero-workspace-link" href="#product-workspace">查看审计工作区</a>
         </div>
         <div class="home-metric-strip" aria-label="平台核心指标">
           <div class="home-metric-item">
@@ -3922,6 +4827,10 @@
             <li>Agent 接入</li>
             <li>安全评测</li>
             <li>报告与日志</li>
+            <li>自主测试规划</li>
+            <li>隔离攻击与加固</li>
+            <li>上线决策与证据</li>
+            <li>下一轮攻击</li>
           </ul>
         </article>
         <article class="home-core-card" id="home-flow" aria-labelledby="home-flow-title">
@@ -4115,33 +5024,6 @@
                     <span class="method-description">上传代码包或接入说明。</span>
                 </span>
               </label>
-              <label class="method-option" data-method-option="docker">
-                <input type="radio" name="integration_type" value="docker">
-                <span class="method-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="5" width="18" height="14" rx="2"/>
-                    <path d="M7 9h10"/>
-                    <path d="M7 13h6"/>
-                  </svg>
-                </span>
-                <span>
-                  <span class="method-title">Docker</span>
-                    <span class="method-description">上传镜像说明或运行配置。</span>
-                </span>
-              </label>
-              <label class="method-option" data-method-option="api">
-                <input type="radio" name="integration_type" value="api">
-                <span class="method-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                  </svg>
-                </span>
-                <span>
-                  <span class="method-title">API</span>
-                    <span class="method-description">接入 HTTP endpoint。</span>
-                </span>
-              </label>
             </div>
           </div>
 
@@ -4180,6 +5062,16 @@
           </div>
 
           <div class="method-panel" id="onboard-source-fields" data-method-panel="source">
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="onboard-source-path">源码目录</label>
+                <input id="onboard-source-path" name="source_path" type="text" autocomplete="off" required>
+              </div>
+              <div class="form-field">
+                <label for="onboard-build-manifest-path">沙箱构建清单</label>
+                <input id="onboard-build-manifest-path" name="build_manifest_path" type="text" autocomplete="off" required>
+              </div>
+            </div>
             <div class="file-upload">
               <div>
                 <div class="file-upload-title">源码物料上传</div>
@@ -4190,33 +5082,6 @@
             <div class="file-list" id="source-file-list" aria-live="polite">未选择文件</div>
           </div>
 
-          <div class="method-panel" id="onboard-docker-fields" data-method-panel="docker" hidden>
-            <div class="file-upload">
-              <div>
-                <div class="file-upload-title">Docker 物料上传</div>
-                <div class="file-upload-help">支持镜像说明、compose 文件或运行配置。</div>
-              </div>
-              <input type="file" id="onboard-docker-files" multiple aria-label="上传 Docker 物料">
-            </div>
-            <div class="file-list" id="docker-file-list" aria-live="polite">未选择文件</div>
-          </div>
-
-          <div class="method-panel" id="onboard-api-fields" data-method-panel="api" hidden>
-            <div class="form-grid">
-              <div class="form-field">
-                <label for="onboard-endpoint-url">API 地址</label>
-                  <input id="onboard-endpoint-url" name="endpoint_url" type="url" placeholder="https://openrouter.ai/api/v1/chat/completions" autocomplete="off">
-              </div>
-              <div class="form-field">
-                <label for="onboard-api-key">API Key</label>
-                  <input id="onboard-api-key" name="api_key" type="password" placeholder="可留空；真实密钥仅提交到接入接口" autocomplete="off">
-              </div>
-            </div>
-            <div class="demo-note" id="api-demo-note">
-              API Key 可留空；有密钥时后端仅保存脱敏信息和 <code>secret</code> 引用。
-            </div>
-          </div>
-
           <div class="onboarding-actions">
             <button class="primary-action" type="submit" id="onboarding-submit">确认接入</button>
             <div class="onboarding-feedback" id="onboarding-feedback" aria-live="polite"></div>
@@ -4225,32 +5090,32 @@
 
         <aside aria-label="Agent 接入状态">
           <div class="demo-note" id="offline-demo-note">
-            离线模式使用 <code>fallback-data</code> 预览画像；后端可用时以 <code>mode=offline_trace</code> 跑完整流程。
+            浏览器离线预览不能验证本地源码哈希。只有后端完成源码快照校验后，Agent 才能进入沙箱审计。
           </div>
           <div class="progress-card" id="onboarding-progress" hidden>
             <div class="progress-title">接入阶段进度</div>
             <div class="stage-list" id="onboarding-stage-list" aria-live="polite">
-              <div class="stage-item pending" data-stage="profile_analysis">
+              <div class="stage-item pending" data-stage="source_snapshot">
                 <div class="stage-marker">1</div>
                 <div>
-                  <div class="stage-name">画像分析</div>
-                  <div class="stage-copy">生成画像和风险面摘要。</div>
+                  <div class="stage-name">源码快照</div>
+                  <div class="stage-copy">校验源码树和构建清单 SHA-256。</div>
                 </div>
                 <div class="stage-state">等待</div>
               </div>
-              <div class="stage-item pending" data-stage="initial_benchmark">
+              <div class="stage-item pending" data-stage="profile_analysis">
                 <div class="stage-marker">2</div>
                 <div>
-                  <div class="stage-name">首轮 benchmark</div>
-                  <div class="stage-copy">记录初始评测任务。</div>
+                  <div class="stage-name">画像分析</div>
+                  <div class="stage-copy">从冻结源码生成画像和风险面摘要。</div>
                 </div>
                 <div class="stage-state">等待</div>
               </div>
-              <div class="stage-item pending" data-stage="default_defense_mount">
+              <div class="stage-item pending" data-stage="sandbox_build_plan">
                 <div class="stage-marker">3</div>
                 <div>
-                  <div class="stage-name">防御挂载</div>
-                  <div class="stage-copy">挂载默认防御策略。</div>
+                  <div class="stage-name">沙箱构建计划</div>
+                  <div class="stage-copy">准备 Sentinel 管理的隔离运行副本。</div>
                 </div>
                 <div class="stage-state">等待</div>
               </div>
@@ -4299,11 +5164,675 @@
         <div class="dashboard-action-copy">选择测试集，查看历史日志。</div>
       </div>
       <div class="dashboard-action-buttons">
+        <a class="primary-action" id="audit-workspace-entry-link" href="#audit-workspace-c5">审计工作区</a>
+        <a class="secondary-action" id="audit-plan-entry-link" href="#audit-plan">看计划</a>
         <button class="primary-action" type="button" id="go-evaluation-entry">去评测</button>
         <a class="secondary-action" id="supervision-entry-link" href="#supervision-panel">监督端</a>
         <a class="secondary-action" id="logs-entry-link" href="#evaluation-logs">查日志</a>
       </div>
     </nav>
+
+    <section class="section audit-plan-section" id="audit-plan" aria-labelledby="audit-plan-title" hidden>
+      <div class="section-header audit-plan-header">
+        <div>
+          <div class="audit-plan-kicker">C2 / Autonomous Planning</div>
+          <h2 class="audit-plan-title" id="audit-plan-title">安全测试计划</h2>
+          <p class="audit-plan-intro">
+            在执行攻击前，审查规划器为何选择这些场景、将测试哪些节点、需要保留什么证据，以及何时停止。
+          </p>
+        </div>
+        <div class="audit-plan-state" id="audit-plan-state">等待计划</div>
+      </div>
+
+      <div class="audit-plan-loader">
+        <div>
+          <label for="audit-plan-id-input">Audit ID</label>
+          <input id="audit-plan-id-input" type="text" placeholder="audit-..." autocomplete="off">
+        </div>
+        <button class="primary-action" id="audit-plan-load-button" type="button">读取计划</button>
+      </div>
+      <div class="audit-plan-status" id="audit-plan-status" role="status" aria-live="polite">
+        输入已生成计划的 Audit ID。
+      </div>
+
+      <div class="audit-plan-empty" id="audit-plan-empty-state">
+        <div class="audit-plan-empty-index" aria-hidden="true">02</div>
+        <strong>尚未载入测试计划</strong>
+        <p>创建并运行审计至 planning 阶段后，可在此查看真实计划。</p>
+      </div>
+
+      <div id="audit-plan-content" hidden>
+        <div class="audit-plan-summary" aria-label="计划摘要">
+          <div class="audit-plan-summary-item">
+            <div class="audit-plan-summary-label">Profile</div>
+            <div class="audit-plan-summary-value" id="audit-plan-profile">--</div>
+          </div>
+          <div class="audit-plan-summary-item">
+            <div class="audit-plan-summary-label">Planned Scenarios</div>
+            <div class="audit-plan-summary-value" id="audit-plan-scenario-count">0</div>
+          </div>
+          <div class="audit-plan-summary-item">
+            <div class="audit-plan-summary-label">Runtime / Seed</div>
+            <div class="audit-plan-summary-value" id="audit-plan-runtime">--</div>
+          </div>
+          <div class="audit-plan-summary-item">
+            <div class="audit-plan-summary-label">Benchmark</div>
+            <div class="audit-plan-summary-value" id="audit-plan-benchmark">--</div>
+          </div>
+        </div>
+
+        <div class="audit-plan-layout">
+          <div class="audit-plan-column">
+            <div class="audit-plan-column-title">决策链</div>
+            <div class="audit-plan-column-copy">按实际执行优先级排列；每项均经过授权范围和 Agent 画像校验。</div>
+            <div class="audit-plan-list" id="audit-plan-items"></div>
+          </div>
+
+          <aside class="audit-policy-column" aria-label="计划策略边界">
+            <div class="audit-policy-head">
+              <div class="audit-policy-title">Policy Envelope</div>
+              <div class="audit-policy-source" id="audit-plan-source">source: --</div>
+            </div>
+            <div class="audit-policy-block">
+              <div class="audit-policy-label">Budget</div>
+              <ul class="audit-policy-list" id="audit-plan-budget"></ul>
+            </div>
+            <div class="audit-policy-block">
+              <div class="audit-policy-label">Normal Tasks</div>
+              <ul class="audit-policy-list" id="audit-plan-normal-tasks"></ul>
+            </div>
+            <div class="audit-policy-block">
+              <div class="audit-policy-label">Stop Conditions</div>
+              <ul class="audit-policy-list" id="audit-plan-stop-conditions"></ul>
+            </div>
+            <div class="audit-policy-block" id="audit-plan-warnings-block" hidden>
+              <div class="audit-policy-label">Planner Disclosure</div>
+              <div id="audit-plan-warnings"></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="section audit-workspace-section" id="audit-workspace-c5" aria-labelledby="audit-workspace-title" hidden>
+      <div class="section-header">
+        <div>
+          <div class="audit-workspace-kicker">C5 / Audit Workspace</div>
+          <h2 class="audit-workspace-title" id="audit-workspace-title">Agent 上线审计工作区</h2>
+          <p class="audit-workspace-copy">
+            从一次审计检查点读取资产、计划、执行阶段、风险、复测、决策和证据。未生成的数据保持为空，不使用演示数字补位。
+          </p>
+        </div>
+        <div class="audit-workspace-state" id="audit-workspace-state">等待审计</div>
+      </div>
+
+      <details class="audit-workspace-create" id="audit-workspace-create">
+        <summary>创建新的上线前审计</summary>
+        <div class="audit-workspace-create-grid">
+          <div class="audit-workspace-field">
+            <label for="audit-create-agent-id">Agent ID</label>
+            <input id="audit-create-agent-id" type="text" placeholder="已注册 Agent ID" autocomplete="off">
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-benchmark">Benchmark</label>
+            <input id="audit-create-benchmark" type="text" value="ecommerce-security-v0.1">
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-benchmark-version">Benchmark Version</label>
+            <input id="audit-create-benchmark-version" type="text" value="v0.1">
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-max-scenarios">Max Scenarios</label>
+            <input id="audit-create-max-scenarios" type="number" value="4" min="1" max="50">
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-normal-task">正常任务</label>
+            <textarea id="audit-create-normal-task" placeholder="例如：总结公开政策并给出来源"></textarea>
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-success-criteria">成功标准</label>
+            <textarea id="audit-create-success-criteria" placeholder="每行一条确定性成功标准"></textarea>
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-security-goals">安全目标</label>
+            <textarea id="audit-create-security-goals" placeholder="每行一条安全目标"></textarea>
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-risk-surfaces">授权风险面</label>
+            <textarea id="audit-create-risk-surfaces" placeholder="逗号或换行分隔，例如 prompt_injection"></textarea>
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-scenarios">允许场景（可选）</label>
+            <textarea id="audit-create-scenarios" placeholder="逗号或换行分隔；留空由策略筛选"></textarea>
+          </div>
+          <div class="audit-workspace-create-actions">
+            <button class="primary-action" id="audit-workspace-create-button" type="button">创建并执行审计</button>
+          </div>
+        </div>
+      </details>
+
+      <div class="audit-workspace-loader">
+        <div class="audit-workspace-field">
+          <label for="audit-workspace-id-input">Audit ID</label>
+          <input id="audit-workspace-id-input" type="text" placeholder="audit-..." autocomplete="off">
+        </div>
+        <div class="audit-workspace-field">
+          <label for="audit-workspace-select">当前租户审计</label>
+          <select id="audit-workspace-select">
+            <option value="">尚未读取审计列表</option>
+          </select>
+        </div>
+        <button class="primary-action" id="audit-workspace-load-button" type="button">载入工作区</button>
+      </div>
+      <div class="audit-workspace-status" id="audit-workspace-status" role="status" aria-live="polite">
+        选择当前租户的一次审计。
+      </div>
+
+      <div class="audit-workspace-empty" id="audit-workspace-empty-state">
+        <strong>尚未载入审计</strong>
+        <span>创建审计后，可在这里查看完整自主执行链。</span>
+      </div>
+
+      <div id="audit-workspace-content" hidden>
+        <div class="audit-workspace-summary" aria-label="审计工作区摘要">
+          <div class="audit-workspace-summary-item">
+            <div class="audit-workspace-summary-label">Agent</div>
+            <div class="audit-workspace-summary-value" id="audit-workspace-agent">--</div>
+          </div>
+          <div class="audit-workspace-summary-item">
+            <div class="audit-workspace-summary-label">Progress</div>
+            <div class="audit-workspace-summary-value" id="audit-workspace-progress-value">0%</div>
+            <div class="audit-workspace-progress"><span id="audit-workspace-progress-bar" style="width: 0%"></span></div>
+          </div>
+          <div class="audit-workspace-summary-item">
+            <div class="audit-workspace-summary-label">Benchmark</div>
+            <div class="audit-workspace-summary-value" id="audit-workspace-benchmark">--</div>
+          </div>
+          <div class="audit-workspace-summary-item">
+            <div class="audit-workspace-summary-label">Release Decision</div>
+            <div class="audit-workspace-summary-value" id="audit-workspace-decision-value">尚未生成</div>
+          </div>
+        </div>
+
+        <div class="audit-workspace-grid">
+          <article class="audit-workspace-card">
+            <div class="audit-workspace-card-label">Asset Understanding</div>
+            <div class="audit-workspace-card-title">资产与权限边界</div>
+            <div id="audit-workspace-assets"></div>
+          </article>
+          <article class="audit-workspace-card">
+            <div class="audit-workspace-card-label">Execution Timeline</div>
+            <div class="audit-workspace-card-title">阶段进度与错误</div>
+            <div id="audit-workspace-stages"></div>
+          </article>
+          <article class="audit-workspace-card wide">
+            <div class="audit-workspace-card-label">Risk And Retest</div>
+            <div class="audit-workspace-card-title">Baseline / Guarded 场景对比</div>
+            <div id="audit-workspace-risks"></div>
+          </article>
+          <article class="audit-workspace-card wide">
+            <div class="audit-workspace-card-label">Score Visualization</div>
+            <div class="audit-workspace-card-title">安全评分与关键指标</div>
+            <div id="audit-workspace-scores"></div>
+          </article>
+          <article class="audit-workspace-card wide">
+            <div class="audit-workspace-card-label">Unified Timeline</div>
+            <div class="audit-workspace-card-title">审计执行时间线</div>
+            <div id="audit-workspace-timeline"></div>
+          </article>
+          <article class="audit-workspace-card wide">
+            <div class="audit-workspace-card-label">Raw Trace Summary</div>
+            <div class="audit-workspace-card-title">LLM、工具与 Guard 轨迹</div>
+            <div id="audit-workspace-traces"></div>
+          </article>
+          <article class="audit-workspace-card">
+            <div class="audit-workspace-card-label">Release Decision</div>
+            <div class="audit-workspace-card-title">上线结论与限制</div>
+            <div id="audit-workspace-decision"></div>
+          </article>
+          <article class="audit-workspace-card">
+            <div class="audit-workspace-card-label">Evidence Integrity</div>
+            <div class="audit-workspace-card-title">证据可用性与哈希</div>
+            <div id="audit-workspace-evidence"></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section audit-workspace-section" id="audit-workspace-c5" aria-labelledby="audit-workspace-title" hidden>
+      <div class="section-header">
+        <div>
+          <div class="audit-workspace-kicker">C5 / Audit Workspace</div>
+          <h2 class="audit-workspace-title" id="audit-workspace-title">Agent 上线审计工作区</h2>
+          <p class="audit-workspace-copy">
+            从一次审计检查点读取资产、计划、执行阶段、风险、复测、决策和证据。未生成的数据保持为空，不使用演示数字补位。
+          </p>
+        </div>
+        <div class="audit-workspace-state" id="audit-workspace-state">等待审计</div>
+      </div>
+
+      <details class="audit-workspace-create" id="audit-workspace-create">
+        <summary>创建新的上线前审计</summary>
+        <div class="audit-workspace-create-grid">
+          <div class="audit-workspace-field">
+            <label for="audit-create-agent-id">Agent ID</label>
+            <input id="audit-create-agent-id" type="text" placeholder="已注册 Agent ID" autocomplete="off">
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-benchmark">Benchmark</label>
+            <input id="audit-create-benchmark" type="text" value="ecommerce-security-v0.1">
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-benchmark-version">Benchmark Version</label>
+            <input id="audit-create-benchmark-version" type="text" value="v0.1">
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-max-scenarios">Max Scenarios</label>
+            <input id="audit-create-max-scenarios" type="number" value="4" min="1" max="50">
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-normal-task">正常任务</label>
+            <textarea id="audit-create-normal-task" placeholder="例如：总结公开政策并给出来源"></textarea>
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-success-criteria">成功标准</label>
+            <textarea id="audit-create-success-criteria" placeholder="每行一条确定性成功标准"></textarea>
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-security-goals">安全目标</label>
+            <textarea id="audit-create-security-goals" placeholder="每行一条安全目标"></textarea>
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-risk-surfaces">授权风险面</label>
+            <textarea id="audit-create-risk-surfaces" placeholder="逗号或换行分隔，例如 prompt_injection"></textarea>
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-scenarios">允许场景（可选）</label>
+            <textarea id="audit-create-scenarios" placeholder="逗号或换行分隔；留空由策略筛选"></textarea>
+          </div>
+          <div class="audit-workspace-create-actions">
+            <button class="primary-action" id="audit-workspace-create-button" type="button">创建并执行审计</button>
+          </div>
+        </div>
+      </details>
+
+      <div class="audit-workspace-loader">
+        <div class="audit-workspace-field">
+          <label for="audit-workspace-id-input">Audit ID</label>
+          <input id="audit-workspace-id-input" type="text" placeholder="audit-..." autocomplete="off">
+        </div>
+        <div class="audit-workspace-field">
+          <label for="audit-workspace-select">当前租户审计</label>
+          <select id="audit-workspace-select">
+            <option value="">尚未读取审计列表</option>
+          </select>
+        </div>
+        <button class="primary-action" id="audit-workspace-load-button" type="button">载入工作区</button>
+      </div>
+      <div class="audit-workspace-status" id="audit-workspace-status" role="status" aria-live="polite">
+        选择当前租户的一次审计。
+      </div>
+
+      <div class="audit-workspace-empty" id="audit-workspace-empty-state">
+        <strong>尚未载入审计</strong>
+        <span>创建审计后，可在这里查看完整自主执行链。</span>
+      </div>
+
+      <div id="audit-workspace-content" hidden>
+        <div class="audit-workspace-summary" aria-label="审计工作区摘要">
+          <div class="audit-workspace-summary-item">
+            <div class="audit-workspace-summary-label">Agent</div>
+            <div class="audit-workspace-summary-value" id="audit-workspace-agent">--</div>
+          </div>
+          <div class="audit-workspace-summary-item">
+            <div class="audit-workspace-summary-label">Progress</div>
+            <div class="audit-workspace-summary-value" id="audit-workspace-progress-value">0%</div>
+            <div class="audit-workspace-progress"><span id="audit-workspace-progress-bar" style="width: 0%"></span></div>
+          </div>
+          <div class="audit-workspace-summary-item">
+            <div class="audit-workspace-summary-label">Benchmark</div>
+            <div class="audit-workspace-summary-value" id="audit-workspace-benchmark">--</div>
+          </div>
+          <div class="audit-workspace-summary-item">
+            <div class="audit-workspace-summary-label">Release Decision</div>
+            <div class="audit-workspace-summary-value" id="audit-workspace-decision-value">尚未生成</div>
+          </div>
+        </div>
+
+        <div class="audit-workspace-grid">
+          <article class="audit-workspace-card">
+            <div class="audit-workspace-card-label">Asset Understanding</div>
+            <div class="audit-workspace-card-title">资产与权限边界</div>
+            <div id="audit-workspace-assets"></div>
+          </article>
+          <article class="audit-workspace-card">
+            <div class="audit-workspace-card-label">Execution Timeline</div>
+            <div class="audit-workspace-card-title">阶段进度与错误</div>
+            <div id="audit-workspace-stages"></div>
+          </article>
+          <article class="audit-workspace-card wide">
+            <div class="audit-workspace-card-label">Risk And Retest</div>
+            <div class="audit-workspace-card-title">Baseline / Guarded 场景对比</div>
+            <div id="audit-workspace-risks"></div>
+          </article>
+          <article class="audit-workspace-card wide">
+            <div class="audit-workspace-card-label">Score Visualization</div>
+            <div class="audit-workspace-card-title">安全评分与关键指标</div>
+            <div id="audit-workspace-scores"></div>
+          </article>
+          <article class="audit-workspace-card wide">
+            <div class="audit-workspace-card-label">Unified Timeline</div>
+            <div class="audit-workspace-card-title">审计执行时间线</div>
+            <div id="audit-workspace-timeline"></div>
+          </article>
+          <article class="audit-workspace-card wide">
+            <div class="audit-workspace-card-label">Raw Trace Summary</div>
+            <div class="audit-workspace-card-title">LLM、工具与 Guard 轨迹</div>
+            <div id="audit-workspace-traces"></div>
+          </article>
+          <article class="audit-workspace-card">
+            <div class="audit-workspace-card-label">Release Decision</div>
+            <div class="audit-workspace-card-title">上线结论与限制</div>
+            <div id="audit-workspace-decision"></div>
+          </article>
+          <article class="audit-workspace-card">
+            <div class="audit-workspace-card-label">Evidence Integrity</div>
+            <div class="audit-workspace-card-title">证据可用性与哈希</div>
+            <div id="audit-workspace-evidence"></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section audit-workspace-section" id="audit-workspace-c5" aria-labelledby="audit-workspace-title" hidden>
+      <div class="section-header">
+        <div>
+          <div class="audit-workspace-kicker">C5 / Audit Workspace</div>
+          <h2 class="audit-workspace-title" id="audit-workspace-title">Agent 上线审计工作区</h2>
+          <p class="audit-workspace-copy">
+            从一次审计检查点读取资产、计划、执行阶段、风险、复测、决策和证据。未生成的数据保持为空，不使用演示数字补位。
+          </p>
+        </div>
+        <div class="audit-workspace-state" id="audit-workspace-state">等待审计</div>
+      </div>
+
+      <details class="audit-workspace-create" id="audit-workspace-create">
+        <summary>创建新的上线前审计</summary>
+        <div class="audit-workspace-create-grid">
+          <div class="audit-workspace-field">
+            <label for="audit-create-agent-id">Agent ID</label>
+            <input id="audit-create-agent-id" type="text" placeholder="已注册 Agent ID" autocomplete="off">
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-benchmark">Benchmark</label>
+            <input id="audit-create-benchmark" type="text" value="ecommerce-security-v0.1">
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-benchmark-version">Benchmark Version</label>
+            <input id="audit-create-benchmark-version" type="text" value="v0.1">
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-max-scenarios">Max Scenarios</label>
+            <input id="audit-create-max-scenarios" type="number" value="4" min="1" max="50">
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-normal-task">正常任务</label>
+            <textarea id="audit-create-normal-task" placeholder="例如：总结公开政策并给出来源"></textarea>
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-success-criteria">成功标准</label>
+            <textarea id="audit-create-success-criteria" placeholder="每行一条确定性成功标准"></textarea>
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-security-goals">安全目标</label>
+            <textarea id="audit-create-security-goals" placeholder="每行一条安全目标"></textarea>
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-risk-surfaces">授权风险面</label>
+            <textarea id="audit-create-risk-surfaces" placeholder="逗号或换行分隔，例如 prompt_injection"></textarea>
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-scenarios">允许场景（可选）</label>
+            <textarea id="audit-create-scenarios" placeholder="逗号或换行分隔；留空由策略筛选"></textarea>
+          </div>
+          <div class="audit-workspace-create-actions">
+            <button class="primary-action" id="audit-workspace-create-button" type="button">创建并执行审计</button>
+          </div>
+        </div>
+      </details>
+
+      <div class="audit-workspace-loader">
+        <div class="audit-workspace-field">
+          <label for="audit-workspace-id-input">Audit ID</label>
+          <input id="audit-workspace-id-input" type="text" placeholder="audit-..." autocomplete="off">
+        </div>
+        <div class="audit-workspace-field">
+          <label for="audit-workspace-select">当前租户审计</label>
+          <select id="audit-workspace-select">
+            <option value="">尚未读取审计列表</option>
+          </select>
+        </div>
+        <button class="primary-action" id="audit-workspace-load-button" type="button">载入工作区</button>
+      </div>
+      <div class="audit-workspace-status" id="audit-workspace-status" role="status" aria-live="polite">
+        选择当前租户的一次审计。
+      </div>
+
+      <div class="audit-workspace-empty" id="audit-workspace-empty-state">
+        <strong>尚未载入审计</strong>
+        <span>创建审计后，可在这里查看完整自主执行链。</span>
+      </div>
+
+      <div id="audit-workspace-content" hidden>
+        <div class="audit-workspace-summary" aria-label="审计工作区摘要">
+          <div class="audit-workspace-summary-item">
+            <div class="audit-workspace-summary-label">Agent</div>
+            <div class="audit-workspace-summary-value" id="audit-workspace-agent">--</div>
+          </div>
+          <div class="audit-workspace-summary-item">
+            <div class="audit-workspace-summary-label">Progress</div>
+            <div class="audit-workspace-summary-value" id="audit-workspace-progress-value">0%</div>
+            <div class="audit-workspace-progress"><span id="audit-workspace-progress-bar" style="width: 0%"></span></div>
+          </div>
+          <div class="audit-workspace-summary-item">
+            <div class="audit-workspace-summary-label">Benchmark</div>
+            <div class="audit-workspace-summary-value" id="audit-workspace-benchmark">--</div>
+          </div>
+          <div class="audit-workspace-summary-item">
+            <div class="audit-workspace-summary-label">Release Decision</div>
+            <div class="audit-workspace-summary-value" id="audit-workspace-decision-value">尚未生成</div>
+          </div>
+        </div>
+
+        <div class="audit-workspace-grid">
+          <article class="audit-workspace-card">
+            <div class="audit-workspace-card-label">Asset Understanding</div>
+            <div class="audit-workspace-card-title">资产与权限边界</div>
+            <div id="audit-workspace-assets"></div>
+          </article>
+          <article class="audit-workspace-card">
+            <div class="audit-workspace-card-label">Execution Timeline</div>
+            <div class="audit-workspace-card-title">阶段进度与错误</div>
+            <div id="audit-workspace-stages"></div>
+          </article>
+          <article class="audit-workspace-card wide">
+            <div class="audit-workspace-card-label">Risk And Retest</div>
+            <div class="audit-workspace-card-title">Baseline / Guarded 场景对比</div>
+            <div id="audit-workspace-risks"></div>
+          </article>
+          <article class="audit-workspace-card wide">
+            <div class="audit-workspace-card-label">Score Visualization</div>
+            <div class="audit-workspace-card-title">安全评分与关键指标</div>
+            <div id="audit-workspace-scores"></div>
+          </article>
+          <article class="audit-workspace-card wide">
+            <div class="audit-workspace-card-label">Unified Timeline</div>
+            <div class="audit-workspace-card-title">审计执行时间线</div>
+            <div id="audit-workspace-timeline"></div>
+          </article>
+          <article class="audit-workspace-card wide">
+            <div class="audit-workspace-card-label">Raw Trace Summary</div>
+            <div class="audit-workspace-card-title">LLM、工具与 Guard 轨迹</div>
+            <div id="audit-workspace-traces"></div>
+          </article>
+          <article class="audit-workspace-card">
+            <div class="audit-workspace-card-label">Release Decision</div>
+            <div class="audit-workspace-card-title">上线结论与限制</div>
+            <div id="audit-workspace-decision"></div>
+          </article>
+          <article class="audit-workspace-card">
+            <div class="audit-workspace-card-label">Evidence Integrity</div>
+            <div class="audit-workspace-card-title">证据可用性与哈希</div>
+            <div id="audit-workspace-evidence"></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section audit-workspace-section" id="audit-workspace-c5" aria-labelledby="audit-workspace-title" hidden>
+      <div class="section-header">
+        <div>
+          <div class="audit-workspace-kicker">C5 / Audit Workspace</div>
+          <h2 class="audit-workspace-title" id="audit-workspace-title">Agent 上线审计工作区</h2>
+          <p class="audit-workspace-copy">
+            从一次审计检查点读取资产、计划、执行阶段、风险、复测、决策和证据。未生成的数据保持为空，不使用演示数字补位。
+          </p>
+        </div>
+        <div class="audit-workspace-state" id="audit-workspace-state">等待审计</div>
+      </div>
+
+      <details class="audit-workspace-create" id="audit-workspace-create">
+        <summary>创建新的上线前审计</summary>
+        <div class="audit-workspace-create-grid">
+          <div class="audit-workspace-field">
+            <label for="audit-create-agent-id">Agent ID</label>
+            <input id="audit-create-agent-id" type="text" placeholder="已注册 Agent ID" autocomplete="off">
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-benchmark">Benchmark</label>
+            <input id="audit-create-benchmark" type="text" value="ecommerce-security-v0.1">
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-benchmark-version">Benchmark Version</label>
+            <input id="audit-create-benchmark-version" type="text" value="v0.1">
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-max-scenarios">Max Scenarios</label>
+            <input id="audit-create-max-scenarios" type="number" value="4" min="1" max="50">
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-normal-task">正常任务</label>
+            <textarea id="audit-create-normal-task" placeholder="例如：总结公开政策并给出来源"></textarea>
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-success-criteria">成功标准</label>
+            <textarea id="audit-create-success-criteria" placeholder="每行一条确定性成功标准"></textarea>
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-security-goals">安全目标</label>
+            <textarea id="audit-create-security-goals" placeholder="每行一条安全目标"></textarea>
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-risk-surfaces">授权风险面</label>
+            <textarea id="audit-create-risk-surfaces" placeholder="逗号或换行分隔，例如 prompt_injection"></textarea>
+          </div>
+          <div class="audit-workspace-field">
+            <label for="audit-create-scenarios">允许场景（可选）</label>
+            <textarea id="audit-create-scenarios" placeholder="逗号或换行分隔；留空由策略筛选"></textarea>
+          </div>
+          <div class="audit-workspace-create-actions">
+            <button class="primary-action" id="audit-workspace-create-button" type="button">创建并执行审计</button>
+          </div>
+        </div>
+      </details>
+
+      <div class="audit-workspace-loader">
+        <div class="audit-workspace-field">
+          <label for="audit-workspace-id-input">Audit ID</label>
+          <input id="audit-workspace-id-input" type="text" placeholder="audit-..." autocomplete="off">
+        </div>
+        <div class="audit-workspace-field">
+          <label for="audit-workspace-select">当前租户审计</label>
+          <select id="audit-workspace-select">
+            <option value="">尚未读取审计列表</option>
+          </select>
+        </div>
+        <button class="primary-action" id="audit-workspace-load-button" type="button">载入工作区</button>
+      </div>
+      <div class="audit-workspace-status" id="audit-workspace-status" role="status" aria-live="polite">
+        选择当前租户的一次审计。
+      </div>
+
+      <div class="audit-workspace-empty" id="audit-workspace-empty-state">
+        <strong>尚未载入审计</strong>
+        <span>创建审计后，可在这里查看完整自主执行链。</span>
+      </div>
+
+      <div id="audit-workspace-content" hidden>
+        <div class="audit-workspace-summary" aria-label="审计工作区摘要">
+          <div class="audit-workspace-summary-item">
+            <div class="audit-workspace-summary-label">Agent</div>
+            <div class="audit-workspace-summary-value" id="audit-workspace-agent">--</div>
+          </div>
+          <div class="audit-workspace-summary-item">
+            <div class="audit-workspace-summary-label">Progress</div>
+            <div class="audit-workspace-summary-value" id="audit-workspace-progress-value">0%</div>
+            <div class="audit-workspace-progress"><span id="audit-workspace-progress-bar" style="width: 0%"></span></div>
+          </div>
+          <div class="audit-workspace-summary-item">
+            <div class="audit-workspace-summary-label">Benchmark</div>
+            <div class="audit-workspace-summary-value" id="audit-workspace-benchmark">--</div>
+          </div>
+          <div class="audit-workspace-summary-item">
+            <div class="audit-workspace-summary-label">Release Decision</div>
+            <div class="audit-workspace-summary-value" id="audit-workspace-decision-value">尚未生成</div>
+          </div>
+        </div>
+
+        <div class="audit-workspace-grid">
+          <article class="audit-workspace-card">
+            <div class="audit-workspace-card-label">Asset Understanding</div>
+            <div class="audit-workspace-card-title">资产与权限边界</div>
+            <div id="audit-workspace-assets"></div>
+          </article>
+          <article class="audit-workspace-card">
+            <div class="audit-workspace-card-label">Execution Timeline</div>
+            <div class="audit-workspace-card-title">阶段进度与错误</div>
+            <div id="audit-workspace-stages"></div>
+          </article>
+          <article class="audit-workspace-card wide">
+            <div class="audit-workspace-card-label">Risk And Retest</div>
+            <div class="audit-workspace-card-title">Baseline / Guarded 场景对比</div>
+            <div id="audit-workspace-risks"></div>
+          </article>
+          <article class="audit-workspace-card wide">
+            <div class="audit-workspace-card-label">Score Visualization</div>
+            <div class="audit-workspace-card-title">安全评分与关键指标</div>
+            <div id="audit-workspace-scores"></div>
+          </article>
+          <article class="audit-workspace-card wide">
+            <div class="audit-workspace-card-label">Unified Timeline</div>
+            <div class="audit-workspace-card-title">审计执行时间线</div>
+            <div id="audit-workspace-timeline"></div>
+          </article>
+          <article class="audit-workspace-card wide">
+            <div class="audit-workspace-card-label">Raw Trace Summary</div>
+            <div class="audit-workspace-card-title">LLM、工具与 Guard 轨迹</div>
+            <div id="audit-workspace-traces"></div>
+          </article>
+          <article class="audit-workspace-card">
+            <div class="audit-workspace-card-label">Release Decision</div>
+            <div class="audit-workspace-card-title">上线结论与限制</div>
+            <div id="audit-workspace-decision"></div>
+          </article>
+          <article class="audit-workspace-card">
+            <div class="audit-workspace-card-label">Evidence Integrity</div>
+            <div class="audit-workspace-card-title">证据可用性与哈希</div>
+            <div id="audit-workspace-evidence"></div>
+          </article>
+        </div>
+      </div>
+    </section>
 
     <section class="section" id="supervision-panel" aria-labelledby="supervision-title" hidden>
       <div class="section-header">
@@ -4825,16 +6354,18 @@
     let logsLoaded = false;
     let logDetailsById = {};
     let activeLogEvaluationId = '';
-    let currentAgentIntegration = '';
-    let currentAgentHasApiKey = false;
+    let currentAgentSandboxAdapter = '';
     let supervisionPollingTimer = null;
     let lastSecurityEvents = [];
-    const DEMO_EVALUATION_MODE = 'offline_trace';
+    let auditPlanData = null;
+    let auditWorkspaceData = null;
+    let auditWorkspaceList = [];
+
     const AUTH_TOKEN_STORAGE_KEY = 'redsentinel.auth.token';
     let authToken = '';
     let currentAuthUser = null;
 
-    const onboardingStageOrder = ['profile_analysis', 'initial_benchmark', 'default_defense_mount'];
+    const onboardingStageOrder = ['source_snapshot', 'profile_analysis', 'sandbox_build_plan'];
     const onboardingStageLabels = {
       pending: '等待',
       running: '进行中',
@@ -4986,6 +6517,8 @@
         hideAuthViews();
         showProductWorkspace();
         if (targetId === 'supervision-panel') showSupervisionPanel();
+        if (targetId === 'audit-plan') showAuditPlan();
+        if (targetId === 'audit-workspace-c5') showAuditWorkspace();
         return;
       }
       showPublicHome();
@@ -5363,47 +6896,12 @@
       const form = document.getElementById('agent-onboarding-form');
       if (!form) return;
 
-      document.querySelectorAll('input[name="integration_type"]').forEach(input => {
-        input.addEventListener('change', () => switchOnboardingType(input.value));
-      });
-
-      const sourceFiles = document.getElementById('onboard-source-files');
-      const dockerFiles = document.getElementById('onboard-docker-files');
-      sourceFiles.addEventListener('change', () => renderSelectedFileList(sourceFiles, 'source-file-list'));
-      dockerFiles.addEventListener('change', () => renderSelectedFileList(dockerFiles, 'docker-file-list'));
       form.addEventListener('submit', handleAgentOnboardingSubmit);
-
-      switchOnboardingType(getSelectedIntegrationType());
       resetOnboardingStages();
     }
 
     function getSelectedIntegrationType() {
-      const selected = document.querySelector('input[name="integration_type"]:checked');
-      return selected ? selected.value : 'source';
-    }
-
-    function switchOnboardingType(type) {
-      document.querySelectorAll('[data-method-option]').forEach(option => {
-        option.classList.toggle('active', option.dataset.methodOption === type);
-      });
-
-      document.querySelectorAll('[data-method-panel]').forEach(panel => {
-        panel.hidden = panel.dataset.methodPanel !== type;
-      });
-
-      const endpointInput = document.getElementById('onboard-endpoint-url');
-      endpointInput.required = type === 'api';
-      setOnboardingFeedback('', '');
-    }
-
-    function renderSelectedFileList(input, targetId) {
-      const names = selectedFileNames(input.id);
-      document.getElementById(targetId).textContent = names.length ? names.join(', ') : '未选择文件';
-    }
-
-    function selectedFileNames(inputId) {
-      const input = document.getElementById(inputId);
-      return Array.from(input.files || []).map(file => file.name);
+      return 'source';
     }
 
     function readFieldValue(id) {
@@ -5430,18 +6928,9 @@
         integration_type: integrationType,
         framework: readFieldValue('onboard-framework') || 'sdk',
         remarks: readFieldValue('onboard-remarks') || null,
-        uploaded_files: []
+        source_path: readFieldValue('onboard-source-path'),
+        build_manifest_path: readFieldValue('onboard-build-manifest-path')
       };
-
-      if (integrationType === 'source') {
-        payload.uploaded_files = selectedFileNames('onboard-source-files');
-      } else if (integrationType === 'docker') {
-        payload.uploaded_files = selectedFileNames('onboard-docker-files');
-      } else if (integrationType === 'api') {
-        payload.endpoint_url = readFieldValue('onboard-endpoint-url');
-        const apiKey = readFieldValue('onboard-api-key');
-        if (apiKey) payload.api_key = apiKey;
-      }
 
       return payload;
     }
@@ -5452,19 +6941,13 @@
         ['name', 'Agent 名称'],
         ['agent_id', 'Agent ID'],
         ['domain', '业务领域'],
-        ['framework', '框架类型']
+        ['framework', '框架类型'],
+        ['source_path', '源码目录'],
+        ['build_manifest_path', '沙箱构建清单']
       ];
 
       for (const [field, label] of requiredFields) {
         if (!payload[field]) return `${label}不能为空。`;
-      }
-
-      if ((payload.integration_type === 'source' || payload.integration_type === 'docker') && payload.uploaded_files.length === 0) {
-        return payload.integration_type === 'source' ? '源码方式需要上传至少一个文件。' : 'Docker 方式需要上传至少一个文件。';
-      }
-
-      if (payload.integration_type === 'api' && !payload.endpoint_url) {
-        return 'API 方式需要填写 API 地址。';
       }
 
       return '';
@@ -5488,7 +6971,7 @@
       progressCard.hidden = false;
       profileCard.hidden = true;
       resetOnboardingStages();
-      setOnboardingStageStatus('profile_analysis', 'running');
+      setOnboardingStageStatus('source_snapshot', 'running');
       setOnboardingFeedback('正在提交接入请求。', 'info');
 
       let responseData = null;
@@ -5558,18 +7041,13 @@
 
     function buildOfflineOnboardingResponse(payload, error) {
       const now = new Date().toISOString();
-      const typeNode = {
-          source: 'source_material',
-          docker: 'docker_material',
-        api: 'api_endpoint'
-      }[payload.integration_type] || 'agent_runtime';
 
       return {
         schema_version: 'agent-onboarding-response-v0.1',
         tenant_id: payload.tenant_id,
         agent_id: payload.agent_id,
-        status: 'ready',
-        ready: true,
+        status: 'failed',
+        ready: false,
         agent: {
           schema_version: 'agent-registration-v0.1',
           tenant_id: payload.tenant_id,
@@ -5580,10 +7058,7 @@
           integration_type: payload.integration_type,
           framework: payload.framework,
           remarks: payload.remarks,
-          status: 'ready',
-          endpoint_url: payload.endpoint_url || null,
-          has_api_key: Boolean(payload.api_key),
-            masked_api_key: payload.api_key ? 'in-memory-preview' : null,
+          status: 'failed',
           created_at: now
         },
         material: {
@@ -5591,9 +7066,11 @@
           material_id: 'offline-material-' + payload.agent_id,
           tenant_id: payload.tenant_id,
           agent_id: payload.agent_id,
-          type: payload.integration_type,
-          endpoint_url: payload.endpoint_url || null,
-          uploaded_files: payload.uploaded_files || [],
+          type: 'source',
+          source_path: payload.source_path,
+          build_manifest_path: payload.build_manifest_path,
+          source_file_count: 0,
+          source_snapshot_verified: false,
           created_at: now
         },
         profile: {
@@ -5604,7 +7081,7 @@
           created_at: now,
           nodes: [
             { node_id: 'input_boundary', node_type: 'input', critical: true, risk_surfaces: ['prompt_injection'] },
-            { node_id: typeNode, node_type: payload.integration_type, critical: true, risk_surfaces: ['runtime_boundary'] },
+            { node_id: 'source_material', node_type: 'source', critical: true, risk_surfaces: ['runtime_boundary'] },
             { node_id: 'output_boundary', node_type: 'output', critical: false, risk_surfaces: ['data_exposure'] }
           ],
           tools: [],
@@ -5616,9 +7093,9 @@
         },
         stages: onboardingStageOrder.map(stage => ({
           name: stage,
-          status: 'completed',
+          status: stage === 'source_snapshot' ? 'failed' : 'skipped',
           mode: 'offline_preview',
-          message: error.message || 'offline preview'
+          message: error.message || 'Source hash verification requires the backend.'
         }))
       };
     }
@@ -5655,8 +7132,7 @@
     function renderAgentProfile(responseData, isFallback) {
       const profile = responseData.profile || {};
       const agent = responseData.agent || {};
-        currentAgentIntegration = agent.integration_type || responseData.material?.type || getSelectedIntegrationType();
-        currentAgentHasApiKey = Boolean(agent.has_api_key || responseData.material?.has_api_key);
+      currentAgentSandboxAdapter = agent.data_boundary?.sandbox_adapter_type || '';
       setText('profile-tenant-id', profile.tenant_id || responseData.tenant_id || agent.tenant_id || '--');
       setText('profile-agent-id', profile.agent_id || responseData.agent_id || agent.agent_id || '--');
       setText('profile-agent-name', agent.name || '--');
@@ -6403,6 +7879,699 @@
       });
     }
 
+    function initAuditPlan() {
+      const entry = document.getElementById('audit-plan-entry-link');
+      const loadButton = document.getElementById('audit-plan-load-button');
+      const input = document.getElementById('audit-plan-id-input');
+      const queryAuditId = getUrlParam('audit_id');
+      if (input && queryAuditId) input.value = queryAuditId;
+      if (entry) {
+        entry.addEventListener('click', event => {
+          event.preventDefault();
+          showAuditPlan();
+        });
+      }
+      if (loadButton) loadButton.addEventListener('click', loadAuditPlan);
+      if (input) {
+        input.addEventListener('keydown', event => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            loadAuditPlan();
+          }
+        });
+      }
+      if (window.location.hash === '#audit-plan') showAuditPlan();
+    }
+
+    function showAuditPlan() {
+      if (!requireAuthenticatedWorkspace('请先登录后查看安全测试计划。')) return;
+      const section = document.getElementById('audit-plan');
+      if (!section) return;
+      showProductWorkspace();
+      section.hidden = false;
+      if (window.location.hash !== '#audit-plan') {
+        history.pushState(null, '', '#audit-plan');
+      }
+      const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+      section.scrollIntoView({ behavior: behavior, block: 'start' });
+      const input = document.getElementById('audit-plan-id-input');
+      if (input?.value.trim() && !auditPlanData) loadAuditPlan();
+    }
+
+    async function loadAuditPlan() {
+      if (!requireAuthenticatedWorkspace('请先登录后读取安全测试计划。')) return;
+      const input = document.getElementById('audit-plan-id-input');
+      const auditId = input?.value.trim() || '';
+      if (!auditId) {
+        setAuditPlanStatus('请输入 Audit ID。', 'error');
+        showAuditPlanEmpty('需要一个已进入 planning 阶段的 Audit ID。');
+        return;
+      }
+
+      setAuditPlanStatus('正在读取并校验计划上下文。');
+      setText('audit-plan-state', 'loading');
+      try {
+        const response = await fetch('/v1/audits/' + encodeURIComponent(auditId) + '/plan', {
+          headers: authHeaders()
+        });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.detail?.message || 'plan endpoint returned ' + response.status);
+        }
+        auditPlanData = await response.json();
+        renderAuditPlan(auditPlanData);
+        setAuditPlanStatus('计划已载入；展示内容来自当前租户的审计检查点。', 'success');
+      } catch (error) {
+        console.warn('Failed to load audit plan:', error);
+        auditPlanData = null;
+        setText('audit-plan-state', 'unavailable');
+        setAuditPlanStatus('计划暂不可用：' + (error.message || 'unknown error'), 'error');
+        showAuditPlanEmpty('未展示演示计划或伪造场景。');
+      }
+    }
+
+    function renderAuditPlan(view) {
+      const task = view?.task || {};
+      const plan = view?.plan || {};
+      const items = Array.isArray(plan.items) ? [...plan.items].sort((a, b) => Number(a.priority) - Number(b.priority)) : [];
+      const normalTasks = Array.isArray(task.normal_tasks) ? task.normal_tasks : [];
+      const stopConditions = Array.isArray(plan.stop_conditions) ? plan.stop_conditions : [];
+      const warnings = Array.isArray(plan.warnings) ? plan.warnings : [];
+      const budget = task.budget || {};
+
+      document.getElementById('audit-plan-empty-state').hidden = true;
+      document.getElementById('audit-plan-content').hidden = false;
+      setText('audit-plan-state', view.state || 'planned');
+      setText('audit-plan-profile', plan.profile_id || '--');
+      setText('audit-plan-scenario-count', String(items.length));
+      setText('audit-plan-runtime', (task.runtime_mode || '--') + ' / ' + (task.seed ?? '--'));
+      setText(
+        'audit-plan-benchmark',
+        [task.benchmark_id, task.benchmark_version].filter(Boolean).join(' @ ') || '--'
+      );
+      setText(
+        'audit-plan-source',
+        'source: ' + (plan.source || '--') + (plan.planner_model ? ' / ' + plan.planner_model : '')
+      );
+
+      document.getElementById('audit-plan-items').innerHTML = items.map(item => `
+        <article class="audit-plan-item">
+          <div class="audit-plan-number">${String(Number(item.priority) || 0).padStart(2, '0')}</div>
+          <div class="audit-plan-card">
+            <div class="audit-plan-card-head">
+              <div class="audit-plan-scenario">${escapeHtml(item.scenario_id || 'unknown-scenario')}</div>
+              <div class="audit-plan-priority">P${escapeHtml(String(item.priority || '--'))}</div>
+            </div>
+            <p class="audit-plan-rationale">${escapeHtml(item.rationale || '未记录选择理由。')}</p>
+            <div class="audit-plan-meta">
+              <span class="audit-plan-chip">risk / ${escapeHtml(item.risk_surface || '--')}</span>
+              <span class="audit-plan-chip">node / ${escapeHtml(item.target_node || '--')}</span>
+            </div>
+            <div class="audit-plan-evidence">
+              ${(item.expected_evidence || []).map(value => `<span class="audit-plan-chip evidence">${escapeHtml(value)}</span>`).join('')}
+            </div>
+          </div>
+        </article>
+      `).join('');
+
+      renderAuditPolicyList('audit-plan-budget', [
+        '最多 ' + (budget.max_scenarios ?? '--') + ' 个场景',
+        '最长 ' + (budget.max_runtime_seconds ?? '--') + ' 秒',
+        '最多 ' + (budget.max_model_calls ?? '--') + ' 次模型调用',
+        '成本上限 $' + (budget.max_cost_usd ?? '--')
+      ]);
+      renderAuditPolicyList(
+        'audit-plan-normal-tasks',
+        normalTasks.map(item => (item.task_id || 'task') + ' · ' + (item.prompt || ''))
+      );
+      renderAuditPolicyList('audit-plan-stop-conditions', stopConditions);
+
+      const warningBlock = document.getElementById('audit-plan-warnings-block');
+      warningBlock.hidden = warnings.length === 0;
+      document.getElementById('audit-plan-warnings').innerHTML = warnings
+        .map(value => `<div class="audit-policy-warning">${escapeHtml(value)}</div>`)
+        .join('');
+    }
+
+    function renderAuditPolicyList(targetId, values) {
+      const target = document.getElementById(targetId);
+      const normalized = Array.isArray(values) && values.length ? values : ['未记录'];
+      target.innerHTML = normalized.map(value => `<li>${escapeHtml(String(value))}</li>`).join('');
+    }
+
+    function showAuditPlanEmpty(message) {
+      const empty = document.getElementById('audit-plan-empty-state');
+      const content = document.getElementById('audit-plan-content');
+      if (content) content.hidden = true;
+      if (empty) {
+        empty.hidden = false;
+        const copy = empty.querySelector('p');
+        if (copy && message) copy.textContent = message;
+      }
+    }
+
+    function setAuditPlanStatus(message, statusClass = '') {
+      const status = document.getElementById('audit-plan-status');
+      if (!status) return;
+      status.textContent = message;
+      status.className = 'audit-plan-status' + (statusClass ? ' ' + statusClass : '');
+    }
+
+    function initAuditWorkspace() {
+      const entry = document.getElementById('audit-workspace-entry-link');
+      const loadButton = document.getElementById('audit-workspace-load-button');
+      const createButton = document.getElementById('audit-workspace-create-button');
+      const input = document.getElementById('audit-workspace-id-input');
+      const select = document.getElementById('audit-workspace-select');
+      const queryAuditId = getUrlParam('audit_id');
+      if (input && queryAuditId) input.value = queryAuditId;
+      if (entry) {
+        entry.addEventListener('click', event => {
+          event.preventDefault();
+          showAuditWorkspace();
+        });
+      }
+      if (loadButton) loadButton.addEventListener('click', loadAuditWorkspace);
+      if (createButton) createButton.addEventListener('click', createAuditFromWorkspace);
+      if (createButton) createButton.addEventListener('click', createAuditFromWorkspace);
+      if (createButton) createButton.addEventListener('click', createAuditFromWorkspace);
+      if (createButton) createButton.addEventListener('click', createAuditFromWorkspace);
+      if (input) {
+        input.addEventListener('keydown', event => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            loadAuditWorkspace();
+          }
+        });
+      }
+      if (select) {
+        select.addEventListener('change', () => {
+          if (!select.value) return;
+          if (input) input.value = select.value;
+          loadAuditWorkspace();
+        });
+      }
+      if (window.location.hash === '#audit-workspace-c5') showAuditWorkspace();
+    }
+
+    function showAuditWorkspace() {
+      if (!requireAuthenticatedWorkspace('请先登录后查看审计工作区。')) return;
+      const section = document.getElementById('audit-workspace-c5');
+      if (!section) return;
+      showProductWorkspace();
+      section.hidden = false;
+      if (window.location.hash !== '#audit-workspace-c5') {
+        history.pushState(null, '', '#audit-workspace-c5');
+      }
+      loadAuditWorkspaceList();
+      const input = document.getElementById('audit-workspace-id-input');
+      if (input?.value.trim() && !auditWorkspaceData) loadAuditWorkspace();
+      const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+      section.scrollIntoView({ behavior: behavior, block: 'start' });
+    }
+
+    async function createAuditFromWorkspace() {
+      if (!requireAuthenticatedWorkspace('请先登录后创建审计。')) return;
+      const createButton = document.getElementById('audit-workspace-create-button');
+      const agentId = auditWorkspaceFieldValue('audit-create-agent-id');
+      const benchmarkId = auditWorkspaceFieldValue('audit-create-benchmark');
+      const benchmarkVersion = auditWorkspaceFieldValue('audit-create-benchmark-version');
+      const normalTask = auditWorkspaceFieldValue('audit-create-normal-task');
+      const successCriteria = splitAuditWorkspaceValues(
+        auditWorkspaceFieldValue('audit-create-success-criteria')
+      );
+      const securityGoals = splitAuditWorkspaceValues(
+        auditWorkspaceFieldValue('audit-create-security-goals')
+      );
+      const riskSurfaces = splitAuditWorkspaceValues(
+        auditWorkspaceFieldValue('audit-create-risk-surfaces')
+      );
+      const allowedScenarios = splitAuditWorkspaceValues(
+        auditWorkspaceFieldValue('audit-create-scenarios')
+      );
+      const maxScenarios = Number(auditWorkspaceFieldValue('audit-create-max-scenarios'));
+      if (!agentId || !benchmarkId || !benchmarkVersion || !normalTask) {
+        setAuditWorkspaceStatus('Agent、Benchmark、版本和正常任务不能为空。', 'error');
+        return;
+      }
+      if (!successCriteria.length || !securityGoals.length || !riskSurfaces.length) {
+        setAuditWorkspaceStatus('成功标准、安全目标和授权风险面至少各填写一项。', 'error');
+        return;
+      }
+      if (!Number.isInteger(maxScenarios) || maxScenarios < 1 || maxScenarios > 50) {
+        setAuditWorkspaceStatus('场景预算必须是 1 到 50 的整数。', 'error');
+        return;
+      }
+
+      const payload = {
+        agent_id: agentId,
+        normal_tasks: [{
+          task_id: 'normal-ui-1',
+          prompt: normalTask,
+          success_criteria: successCriteria
+        }],
+        security_goals: securityGoals,
+        authorized_risk_surfaces: riskSurfaces,
+        allowed_scenarios: allowedScenarios,
+        runtime_mode: 'sdk',
+        benchmark_id: benchmarkId,
+        benchmark_version: benchmarkVersion,
+        seed: 42,
+        budget: {
+          max_scenarios: maxScenarios,
+          max_runtime_seconds: 900,
+          max_model_calls: 20,
+          max_cost_usd: 5
+        },
+        auto_harden: true,
+        approval_required_actions: [],
+        minimum_clean_utility: 0.95
+      };
+
+      if (createButton) {
+        createButton.disabled = true;
+        createButton.textContent = '审计执行中...';
+      }
+      setAuditWorkspaceStatus('正在创建并执行审计。');
+      try {
+        const response = await fetch('/v1/audits', {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => ({}));
+          throw new Error(errorPayload.detail?.message || 'audit endpoint returned ' + response.status);
+        }
+        const run = await response.json();
+        const input = document.getElementById('audit-workspace-id-input');
+        if (input) input.value = run.audit_id || '';
+        auditWorkspaceData = null;
+        await loadAuditWorkspaceList();
+        await loadAuditWorkspace();
+        const details = document.getElementById('audit-workspace-create');
+        if (details) details.open = false;
+      } catch (error) {
+        console.warn('Failed to create audit:', error);
+        setAuditWorkspaceStatus('创建审计失败：' + (error.message || 'unknown error'), 'error');
+      } finally {
+        if (createButton) {
+          createButton.disabled = false;
+          createButton.textContent = '创建并执行审计';
+        }
+      }
+    }
+
+    function auditWorkspaceFieldValue(id) {
+      return document.getElementById(id)?.value.trim() || '';
+    }
+
+    function splitAuditWorkspaceValues(value) {
+      return [...new Set(String(value || '').split(/[\n,]+/).map(item => item.trim()).filter(Boolean))];
+    }
+
+    async function loadAuditWorkspaceList() {
+      if (!hasAuthToken()) return;
+      try {
+        const response = await fetch('/v1/audits', { headers: authHeaders() });
+        if (!response.ok) throw new Error('audit list returned ' + response.status);
+        const payload = await response.json();
+        auditWorkspaceList = Array.isArray(payload) ? payload : [];
+        renderAuditWorkspaceOptions(auditWorkspaceList);
+      } catch (error) {
+        console.warn('Failed to load audit list:', error);
+        auditWorkspaceList = [];
+        renderAuditWorkspaceOptions([]);
+        setAuditWorkspaceStatus('审计列表暂不可用。', 'error');
+      }
+    }
+
+    function renderAuditWorkspaceOptions(audits) {
+      const select = document.getElementById('audit-workspace-select');
+      if (!select) return;
+      const sorted = [...audits].sort((left, right) => {
+        const leftTime = Date.parse(left?.updated_at || '') || 0;
+        const rightTime = Date.parse(right?.updated_at || '') || 0;
+        return rightTime - leftTime;
+      });
+      select.innerHTML = sorted.length
+        ? '<option value="">选择一次审计</option>' + sorted.map(item => (
+          `<option value="${escapeHtml(item.audit_id)}">${escapeHtml(item.audit_id)} · ${escapeHtml(item.state || 'unknown')}</option>`
+        )).join('')
+        : '<option value="">当前租户暂无审计</option>';
+    }
+
+    async function loadAuditWorkspace() {
+      if (!requireAuthenticatedWorkspace('请先登录后读取审计工作区。')) return;
+      const input = document.getElementById('audit-workspace-id-input');
+      const auditId = input?.value.trim() || '';
+      if (!auditId) {
+        setAuditWorkspaceStatus('请输入或选择 Audit ID。', 'error');
+        showAuditWorkspaceEmpty('没有可展示的审计数据。');
+        return;
+      }
+
+      setAuditWorkspaceStatus('正在读取审计检查点与证据。');
+      setText('audit-workspace-state', 'loading');
+      try {
+        const response = await fetch('/v1/audits/' + encodeURIComponent(auditId) + '/workspace', {
+          headers: authHeaders()
+        });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.detail?.message || 'workspace endpoint returned ' + response.status);
+        }
+        auditWorkspaceData = await response.json();
+        renderAuditWorkspace(auditWorkspaceData);
+        setAuditWorkspaceStatus('工作区已载入；所有内容来自当前租户持久化检查点。', 'success');
+      } catch (error) {
+        console.warn('Failed to load audit workspace:', error);
+        auditWorkspaceData = null;
+        setText('audit-workspace-state', 'unavailable');
+        setAuditWorkspaceStatus('工作区暂不可用：' + (error.message || 'unknown error'), 'error');
+        showAuditWorkspaceEmpty('未展示示例结论或伪造证据。');
+      }
+    }
+
+    function renderAuditWorkspace(view) {
+      const task = view?.task || {};
+      const profile = view?.profile || {};
+      const status = view?.status || {};
+      const decision = view?.decision || null;
+      const evidence = view?.evidence || {};
+      const progress = clamp(Number(status.progress_percent) || 0, 0, 100);
+      const content = document.getElementById('audit-workspace-content');
+      const empty = document.getElementById('audit-workspace-empty-state');
+      if (empty) empty.hidden = true;
+      if (content) content.hidden = false;
+
+      setText('audit-workspace-state', view?.state || 'unknown');
+      setText('audit-workspace-agent', profile.agent_id || task.agent_id || '--');
+      setText('audit-workspace-progress-value', progress.toFixed(1) + '%');
+      setText(
+        'audit-workspace-benchmark',
+        [task.benchmark_id, task.benchmark_version].filter(Boolean).join(' @ ') || '--'
+      );
+      setText(
+        'audit-workspace-decision-value',
+        decision ? auditDecisionLabel(decision.decision) : '尚未生成'
+      );
+      const progressBar = document.getElementById('audit-workspace-progress-bar');
+      if (progressBar) progressBar.style.width = progress + '%';
+
+      renderAuditWorkspaceAssets(profile, task);
+      renderAuditWorkspaceStages(status);
+      renderAuditWorkspaceRisks(view);
+      renderAuditWorkspaceScores(view);
+      renderAuditWorkspaceTimeline(view);
+      renderAuditWorkspaceTraces(view?.traces);
+      renderAuditWorkspaceDecision(decision);
+      renderAuditWorkspaceEvidence(evidence);
+    }
+
+    function renderAuditWorkspaceAssets(profile, task) {
+      const nodes = Array.isArray(profile.nodes) ? profile.nodes : [];
+      const tools = Array.isArray(profile.tools) ? profile.tools : [];
+      const risks = Array.isArray(profile.risk_surface) ? profile.risk_surface : [];
+      const target = document.getElementById('audit-workspace-assets');
+      if (!target) return;
+      const nodeRows = nodes.map(node => `
+        <div class="audit-workspace-row">
+          <div class="audit-workspace-row-head"><span>${escapeHtml(node.node_id || 'node')}</span><span>${escapeHtml(node.node_type || '--')}</span></div>
+          <div class="audit-workspace-row-meta">${escapeHtml((node.risk_surfaces || []).join(' · ') || '未记录风险面')}</div>
+        </div>
+      `).join('');
+      const toolPills = tools.map(tool => (
+        `<span class="audit-workspace-pill">${escapeHtml(tool.name || 'tool')} / ${escapeHtml(tool.risk_level || '--')}</span>`
+      )).join('');
+      const riskPills = risks.map(risk => `<span class="audit-workspace-pill">${escapeHtml(risk)}</span>`).join('');
+      target.innerHTML = `
+        <div class="audit-workspace-list">${nodeRows || '<div class="audit-workspace-empty-row">画像节点尚未生成。</div>'}</div>
+        <div>${toolPills || '<span class="audit-workspace-empty-row">工具清单尚未生成。</span>'}</div>
+        <div>${riskPills || '<span class="audit-workspace-empty-row">风险面尚未生成。</span>'}</div>
+        <div class="audit-workspace-row-meta" style="margin-top: 10px">授权范围：${escapeHtml((task.authorized_risk_surfaces || []).join(' · ') || '未记录')}</div>
+      `;
+    }
+
+    function renderAuditWorkspaceStages(status) {
+      const stages = Array.isArray(status.stages) ? status.stages : [];
+      const target = document.getElementById('audit-workspace-stages');
+      if (!target) return;
+      target.innerHTML = `<div class="audit-workspace-list">${stages.map(stage => `
+        <div class="audit-workspace-row">
+          <div class="audit-workspace-row-head">
+            <span>${escapeHtml(stage.state || 'stage')}</span>
+            <span>${escapeHtml(stage.status || '--')} · #${escapeHtml(stage.attempt || 1)}</span>
+          </div>
+          <div class="audit-workspace-row-meta">${escapeHtml(String(stage.duration_ms ?? 0))} ms${stage.message ? ' · ' + escapeHtml(stage.message) : ''}</div>
+        </div>
+      `).join('') || '<div class="audit-workspace-empty-row">尚无阶段事件。</div>'}</div>`;
+    }
+
+    function renderAuditWorkspaceRisks(view) {
+      const planItems = Array.isArray(view?.plan?.items) ? view.plan.items : [];
+      const baselineResults = Array.isArray(view?.baseline_report?.scenario_results)
+        ? view.baseline_report.scenario_results : [];
+      const guardedResults = Array.isArray(view?.guarded_report?.scenario_results)
+        ? view.guarded_report.scenario_results : [];
+      const baselineById = Object.fromEntries(baselineResults.map(item => [item.scenario_id, item]));
+      const guardedById = Object.fromEntries(guardedResults.map(item => [item.scenario_id, item]));
+      const scenarioIds = planItems.length
+        ? planItems.map(item => item.scenario_id)
+        : [...new Set([...baselineResults, ...guardedResults].map(item => item.scenario_id))];
+      const target = document.getElementById('audit-workspace-risks');
+      if (!target) return;
+      target.innerHTML = `<div class="audit-workspace-list">${scenarioIds.map(scenarioId => {
+        const baseline = baselineById[scenarioId];
+        const guarded = guardedById[scenarioId];
+        return `
+          <div class="audit-workspace-row">
+            <div class="audit-workspace-row-head">
+              <span>${escapeHtml(scenarioId)}</span>
+              <span>${escapeHtml(guarded?.severity || baseline?.severity || '--')}</span>
+            </div>
+            <div class="audit-workspace-row-meta">
+              baseline: ${escapeHtml(baseline ? (baseline.passed ? 'blocked' : 'effect observed') : '尚未执行')}
+              · guarded: ${escapeHtml(guarded ? (guarded.passed ? 'blocked' : 'unresolved') : '尚未执行')}
+              · node: ${escapeHtml(guarded?.target_node || baseline?.target_node || '--')}
+            </div>
+          </div>
+        `;
+      }).join('') || '<div class="audit-workspace-empty-row">计划或评测结果尚未生成。</div>'}</div>`;
+    }
+
+    function renderAuditWorkspaceScores(view) {
+      const target = document.getElementById('audit-workspace-scores');
+      if (!target) return;
+      const baseline = view?.baseline_report;
+      const guarded = view?.guarded_report;
+      const comparison = view?.comparison;
+      if (!baseline && !guarded && !comparison) {
+        target.innerHTML = '<div class="audit-workspace-empty-row">评分尚未生成。</div>';
+        return;
+      }
+      const metrics = [
+        {
+          label: 'Security Score',
+          before: comparison?.before_score ?? baseline?.overall_score,
+          after: comparison?.after_score ?? guarded?.overall_score,
+          scale: 100,
+          format: value => isFiniteNumber(value) ? String(value.toFixed(0)) : '--'
+        },
+        {
+          label: 'ASR',
+          before: auditWorkspaceMetric(baseline, 'asr', 'attack_success_rate'),
+          after: auditWorkspaceMetric(guarded, 'asr', 'attack_success_rate'),
+          scale: 1,
+          format: formatPercent
+        },
+        {
+          label: 'DSR',
+          before: auditWorkspaceMetric(baseline, 'dsr', 'defense_success_rate'),
+          after: auditWorkspaceMetric(guarded, 'dsr', 'defense_success_rate'),
+          scale: 1,
+          format: formatPercent
+        },
+        {
+          label: 'FPR',
+          before: auditWorkspaceMetric(baseline, 'fpr', 'false_positive_rate'),
+          after: auditWorkspaceMetric(guarded, 'fpr', 'false_positive_rate'),
+          scale: 1,
+          format: formatPercent
+        }
+      ];
+      target.innerHTML = `
+        <div class="audit-score-grid">${metrics.map(metric => {
+          const beforeWidth = auditWorkspaceMetricWidth(metric.before, metric.scale);
+          const afterWidth = auditWorkspaceMetricWidth(metric.after, metric.scale);
+          return `
+            <div class="audit-score-row">
+              <strong>${escapeHtml(metric.label)}</strong>
+              <div class="audit-score-track" aria-label="${escapeHtml(metric.label)} baseline and guarded">
+                <div class="audit-score-bar"><span style="width:${beforeWidth}%"></span></div>
+                <div class="audit-score-bar guarded"><span style="width:${afterWidth}%"></span></div>
+              </div>
+              <div class="audit-score-values">${escapeHtml(metric.format(metric.before))}<br>${escapeHtml(metric.format(metric.after))}</div>
+            </div>
+          `;
+        }).join('')}</div>
+        <div class="audit-workspace-row-meta" style="margin-top:10px">上行为 baseline，下行为 guarded。ASR/FPR 越低越好，Security Score/DSR 越高越好。</div>
+      `;
+    }
+
+    function auditWorkspaceMetric(report, deterministicKey, reportKey) {
+      const deterministic = report?.deterministic_metrics?.[deterministicKey];
+      return deterministic ?? report?.[reportKey] ?? null;
+    }
+
+    function auditWorkspaceMetricWidth(value, scale) {
+      const number = Number(value);
+      return Number.isFinite(number) ? clamp((number / scale) * 100, 0, 100) : 0;
+    }
+
+    function renderAuditWorkspaceTimeline(view) {
+      const target = document.getElementById('audit-workspace-timeline');
+      if (!target) return;
+      const stages = Array.isArray(view?.status?.stages) ? view.status.stages : [];
+      const traces = Array.isArray(view?.traces) ? view.traces : [];
+      const items = stages.map((stage, index) => ({
+        timestamp: stage.started_at,
+        order: index,
+        title: stage.state || 'stage',
+        meta: `${stage.status || '--'} · attempt ${stage.attempt || 1} · ${stage.duration_ms ?? 0} ms`
+      }));
+      traces.forEach((trace, traceIndex) => {
+        (trace.events || []).forEach(event => items.push({
+          timestamp: event.timestamp,
+          order: stages.length + traceIndex * 1000 + (event.sequence || 0),
+          title: event.title || event.event_type || 'trace event',
+          meta: `${trace.phase} · ${trace.scenario_id} · ${event.stream}`
+        }));
+      });
+      items.sort((left, right) => {
+        const leftTime = Date.parse(left.timestamp || '');
+        const rightTime = Date.parse(right.timestamp || '');
+        if (Number.isFinite(leftTime) && Number.isFinite(rightTime) && leftTime !== rightTime) {
+          return leftTime - rightTime;
+        }
+        return left.order - right.order;
+      });
+      target.innerHTML = `<div class="audit-timeline">${items.slice(0, 80).map(item => `
+        <div class="audit-timeline-item">
+          <strong>${escapeHtml(item.title)}</strong>
+          <div class="audit-timeline-meta">${escapeHtml(item.timestamp || 'timestamp unavailable')} · ${escapeHtml(item.meta)}</div>
+        </div>
+      `).join('') || '<div class="audit-workspace-empty-row">尚无可展示的阶段或轨迹事件。</div>'}</div>
+      ${items.length > 80 ? `<div class="audit-workspace-row-meta">时间线显示前 80 项，共 ${items.length} 项。</div>` : ''}`;
+    }
+
+    function renderAuditWorkspaceTraces(traces) {
+      const target = document.getElementById('audit-workspace-traces');
+      if (!target) return;
+      const values = Array.isArray(traces) ? traces : [];
+      target.innerHTML = `<div class="audit-trace-list">${values.map(trace => {
+        const events = Array.isArray(trace.events) ? trace.events : [];
+        const state = trace.available ? `${trace.event_count} events` : 'unavailable';
+        return `
+          <details class="audit-trace">
+            <summary>
+              <span>${escapeHtml(trace.phase || '--')} · ${escapeHtml(trace.scenario_id || '--')}</span>
+              <span>${escapeHtml(state)}${trace.truncated ? ' · truncated' : ''}</span>
+            </summary>
+            <div class="audit-trace-events">
+              ${events.map(event => {
+                const metadata = Object.entries(event.metadata || {})
+                  .map(([key, value]) => `${key}: ${value}`)
+                  .join(' · ');
+                return `
+                  <details class="audit-trace-event ${escapeHtml(safeCssToken(event.event_type, 'runtime_event'))}">
+                    <summary>${escapeHtml(event.title || event.event_type || 'event')}</summary>
+                    <div class="audit-workspace-row-meta">${escapeHtml(event.stream || '--')} · #${escapeHtml(event.sequence ?? 0)}${event.timestamp ? ' · ' + escapeHtml(event.timestamp) : ''}</div>
+                    ${metadata ? `<div class="audit-workspace-row-meta">${escapeHtml(metadata)}</div>` : ''}
+                    ${event.summary ? `<pre>${escapeHtml(event.summary)}</pre>` : ''}
+                  </details>
+                `;
+              }).join('') || '<div class="audit-workspace-empty-row">轨迹文件存在，但没有可识别事件。</div>'}
+              <div class="audit-workspace-row-meta">${escapeHtml(trace.trajectory_ref || '--')}</div>
+            </div>
+          </details>
+        `;
+      }).join('') || '<div class="audit-workspace-empty-row">轨迹尚未生成；未展示演示数据。</div>'}</div>`;
+    }
+
+    function renderAuditWorkspaceDecision(decision) {
+      const target = document.getElementById('audit-workspace-decision');
+      if (!target) return;
+      if (!decision) {
+        target.innerHTML = '<div class="audit-workspace-empty-row">上线决策尚未生成。</div>';
+        return;
+      }
+      const reasons = Array.isArray(decision.reasons) ? decision.reasons : [];
+      const limitations = Array.isArray(decision.limitations) ? decision.limitations : [];
+      target.innerHTML = `
+        <div class="audit-workspace-decision ${escapeHtml(safeCssToken(decision.decision))}">
+          <strong>${escapeHtml(auditDecisionLabel(decision.decision))}</strong>
+          <div class="audit-workspace-row-meta">${escapeHtml(reasons.join('；') || '未记录决策理由。')}</div>
+        </div>
+        <div>
+          <span class="audit-workspace-pill">clean utility ${escapeHtml(formatPercent(decision.clean_utility_rate))}</span>
+          <span class="audit-workspace-pill">evidence ${decision.evidence_complete ? 'complete' : 'incomplete'}</span>
+        </div>
+        <div class="audit-workspace-row-meta" style="margin-top: 10px">限制：${escapeHtml(limitations.join('；') || '未记录')}</div>
+      `;
+    }
+
+    function renderAuditWorkspaceEvidence(evidence) {
+      const artifacts = Array.isArray(evidence.artifacts) ? evidence.artifacts : [];
+      const availableCount = artifacts.filter(item => item.available).length;
+      const target = document.getElementById('audit-workspace-evidence');
+      if (!target) return;
+      target.innerHTML = `
+        <div>
+          <span class="audit-workspace-pill">${availableCount}/${artifacts.length} available</span>
+          <span class="audit-workspace-pill">${(evidence.incomplete_refs || []).length} incomplete</span>
+        </div>
+        <div class="audit-workspace-list">${artifacts.slice(0, 8).map(item => `
+          <div class="audit-workspace-row">
+            <div class="audit-workspace-row-head">
+              <span>${escapeHtml(item.kind || 'artifact')} · ${escapeHtml(item.stage || '--')}</span>
+              <span>${item.available ? 'available' : 'missing'}</span>
+            </div>
+            <div class="audit-workspace-row-meta">${escapeHtml(item.ref || '--')}</div>
+            <div class="audit-workspace-row-meta">${escapeHtml(item.sha256 ? item.sha256.slice(0, 16) + '…' : 'sha256 unavailable')}</div>
+          </div>
+        `).join('') || '<div class="audit-workspace-empty-row">证据索引尚未生成。</div>'}</div>
+        ${artifacts.length > 8 ? `<div class="audit-workspace-row-meta">首屏显示 8 项，共 ${artifacts.length} 项。</div>` : ''}
+      `;
+    }
+
+    function auditDecisionLabel(decision) {
+      return {
+        allow_release: '允许上线',
+        retest_after_fix: '修复后复测',
+        block_release: '高风险禁止上线',
+        manual_review: '需要人工审批'
+      }[decision] || decision || '尚未生成';
+    }
+
+    function showAuditWorkspaceEmpty(message) {
+      const empty = document.getElementById('audit-workspace-empty-state');
+      const content = document.getElementById('audit-workspace-content');
+      if (content) content.hidden = true;
+      if (empty) {
+        empty.hidden = false;
+        const copy = empty.querySelector('span');
+        if (copy && message) copy.textContent = message;
+      }
+    }
+
+    function setAuditWorkspaceStatus(message, statusClass = '') {
+      const status = document.getElementById('audit-workspace-status');
+      if (!status) return;
+      status.textContent = message;
+      status.className = 'audit-workspace-status' + (statusClass ? ' ' + statusClass : '');
+    }
+
     function initEvaluationLogs() {
       const logsEntry = document.getElementById('logs-entry-link');
       const refreshButton = document.getElementById('logs-refresh-button');
@@ -6959,14 +9128,14 @@
         agent_id: agentId,
         benchmark_id: benchmarkId,
         benchmark_version: benchmarkVersion,
-          mode: getEvaluationMode(),
+        mode: getEvaluationMode(),
         benchmark: benchmarkId
       };
     }
 
-      function getEvaluationMode() {
-        return currentAgentIntegration === 'api' && currentAgentHasApiKey ? 'hosted_api' : DEMO_EVALUATION_MODE;
-      }
+    function getEvaluationMode() {
+      return currentAgentSandboxAdapter === 'openmanus' ? 'openmanus_real' : 'sdk';
+    }
 
     function validateEvaluationPayload(payload) {
       if (!payload.agent_id) return '需要先接入 Agent，填写 Agent ID 后再启动评测。';
@@ -7107,7 +9276,7 @@
       );
       const currentCase = status?.current_case || progress.current_case || '--';
       const currentNode = status?.current_node || progress.current_node || '--';
-      const evaluationMode = status?.mode || DEMO_EVALUATION_MODE;
+      const evaluationMode = status?.mode || getEvaluationMode();
 
       setText('evaluation-progress-completed', completed);
       setText('evaluation-progress-total', total);
@@ -7699,6 +9868,8 @@
     initAuth();
     initAgentOnboarding();
     initDashboardActions();
+    initAuditPlan();
+    initAuditWorkspace();
     initEvaluationLogs();
     initBenchmarkSelection();
     initEvaluationLaunchControl();

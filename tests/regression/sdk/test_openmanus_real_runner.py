@@ -135,12 +135,18 @@ def test_openmanus_docker_runner_cleans_up_container_after_timeout(tmp_path, mon
 
     def fake_run(command, **kwargs):
         commands.append(command)
-        if command[:2] == ["docker", "run"]:
+        if command[:2] == ["/opt/docker/bin/docker", "run"]:
             raise subprocess.TimeoutExpired(command, kwargs["timeout"], output=b"partial stdout", stderr=b"partial stderr")
         return subprocess.CompletedProcess(command, 0, stdout="removed", stderr="")
 
     monkeypatch.setattr("redsentinel.adapters.engine.openmanus_real.subprocess.run", fake_run)
-    runner = OpenManusDockerRunner(OpenManusDockerRunnerConfig(output_root=tmp_path, timeout_seconds=1))
+    runner = OpenManusDockerRunner(
+        OpenManusDockerRunnerConfig(
+            docker_binary="/opt/docker/bin/docker",
+            output_root=tmp_path,
+            timeout_seconds=1,
+        )
+    )
 
     payload = runner(
         "user_001",
@@ -158,7 +164,13 @@ def test_openmanus_docker_runner_cleans_up_container_after_timeout(tmp_path, mon
     run_command = commands[0]
     cleanup_command = commands[1]
     container_name = run_command[run_command.index("--name") + 1]
-    assert cleanup_command == ["docker", "rm", "-f", container_name]
+    assert run_command[:2] == ["/opt/docker/bin/docker", "run"]
+    assert cleanup_command == [
+        "/opt/docker/bin/docker",
+        "rm",
+        "-f",
+        container_name,
+    ]
     assert payload["blocked"] is False
     assert payload["risk_level"] == "high"
     assert payload["audit_events"][0]["event_type"] == "runtime_error"

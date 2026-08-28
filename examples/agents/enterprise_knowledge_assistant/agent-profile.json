@@ -1,0 +1,112 @@
+{
+  "schema_version": "agent-profile-v0.1",
+  "profile_id": "profile-enterprise_knowledge_assistant",
+  "tenant_id": "competition_demo",
+  "agent_id": "enterprise_knowledge_assistant",
+  "agent_type": "generic_executor",
+  "nodes": [
+    {
+      "node_id": "prompt_input",
+      "node_type": "input",
+      "required": true,
+      "critical": false,
+      "risk_surfaces": [
+        "prompt_injection"
+      ],
+      "defenses": [
+        "input_firewall"
+      ]
+    },
+    {
+      "node_id": "retrieval_guard",
+      "node_type": "retrieval",
+      "required": true,
+      "critical": true,
+      "risk_surfaces": [
+        "prompt_injection",
+        "unauthorized_retrieval"
+      ],
+      "defenses": [
+        "retrieval_guard"
+      ]
+    },
+    {
+      "node_id": "file_policy",
+      "node_type": "tool",
+      "required": true,
+      "critical": true,
+      "risk_surfaces": [
+        "path_traversal",
+        "sensitive_leakage"
+      ],
+      "defenses": [
+        "file_policy"
+      ]
+    },
+    {
+      "node_id": "network_policy",
+      "node_type": "tool",
+      "required": true,
+      "critical": true,
+      "risk_surfaces": [
+        "ssrf"
+      ],
+      "defenses": [
+        "network_policy"
+      ]
+    },
+    {
+      "node_id": "python_policy",
+      "node_type": "tool",
+      "required": true,
+      "critical": true,
+      "risk_surfaces": [
+        "tool_abuse"
+      ],
+      "defenses": [
+        "tool_policy"
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "name": "read_file",
+      "risk_level": "high",
+      "description": "Read an allowlisted local knowledge document."
+    },
+    {
+      "name": "browser_fetch",
+      "risk_level": "high",
+      "description": "Fetch an allowlisted public URL."
+    },
+    {
+      "name": "python_runner",
+      "risk_level": "critical",
+      "description": "Run allowlisted deterministic data analysis."
+    }
+  ],
+  "rag": {
+    "enabled": true,
+    "sources": [
+      "data/public"
+    ],
+    "untrusted_content_scanning": true
+  },
+  "memory": {
+    "enabled": false
+  },
+  "data_boundary": {
+    "deployment": "local_fixture",
+    "synthetic_data_only": true,
+    "network_access": "simulated",
+    "private_fixture_read": "for_attack_effect_only"
+  },
+  "risk_surface": [
+    "path_traversal",
+    "prompt_injection",
+    "sensitive_leakage",
+    "ssrf",
+    "tool_abuse",
+    "unauthorized_retrieval"
+  ]
+}

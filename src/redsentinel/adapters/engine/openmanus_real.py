@@ -20,6 +20,7 @@ DEFAULT_OUTPUT_ROOT = "runs/openmanus-real"
 @dataclass(frozen=True)
 class OpenManusDockerRunnerConfig:
     image: str = DEFAULT_OPENMANUS_IMAGE
+    docker_binary: str = "docker"
     output_root: str | Path = DEFAULT_OUTPUT_ROOT
     timeout_seconds: int = 300
     memory_limit: str = "1g"
@@ -42,6 +43,12 @@ class OpenManusDockerRunner:
         scenario_id = str(context.get("scenario_id") or "manual")
         case_type = str(context.get("case_type") or "manual")
         defense_mode = str(context.get("defense_mode") or "guarded")
+        active_guards = sorted(
+            {str(item) for item in context.get("active_guards") or []}
+        )
+        remediation_bundle_id = str(
+            context.get("remediation_bundle_id") or ""
+        )
         agent_id = str(context.get("agent_id") or "openmanus_official")
         turn_dir = self.output_root / _safe_path(session_id) / f"{turn_index:03d}-{_safe_path(scenario_id)}-{case_type}"
         turn_dir.mkdir(parents=True, exist_ok=True)
@@ -56,6 +63,7 @@ class OpenManusDockerRunner:
             scenario_id=scenario_id,
             case_type=case_type,
             defense_mode=defense_mode,
+            active_guards=active_guards if remediation_bundle_id else None,
         )
         stdout_path = turn_dir / "stdout.log"
         stderr_path = turn_dir / "stderr.log"
@@ -97,6 +105,11 @@ class OpenManusDockerRunner:
             "events_path": str(turn_dir / "events.jsonl"),
             "memory_path": str(turn_dir / "memory.json"),
             "defense_mode": defense_mode,
+            "active_guards": active_guards,
+            "remediation_bundle_id": remediation_bundle_id,
+            "remediation_policy_sha256": str(
+                context.get("remediation_policy_sha256") or ""
+            ),
             "scenario_id": scenario_id,
             "case_type": case_type,
             "container_name": container_name,
@@ -138,9 +151,10 @@ class OpenManusDockerRunner:
         scenario_id: str,
         case_type: str,
         defense_mode: str,
+        active_guards: list[str] | None,
     ) -> list[str]:
         return [
-            "docker",
+            self.config.docker_binary,
             "run",
             "--rm",
             "--name",
@@ -176,6 +190,8 @@ class OpenManusDockerRunner:
             case_type,
             "--defense-mode",
             defense_mode,
+            "--active-guards",
+            ",".join(active_guards) if active_guards is not None else "*",
             "--user-id",
             user_id,
             "--agent-id",
@@ -187,7 +203,7 @@ class OpenManusDockerRunner:
     def _cleanup_container(self, container_name: str) -> str | None:
         try:
             completed = subprocess.run(
-                ["docker", "rm", "-f", container_name],
+                [self.config.docker_binary, "rm", "-f", container_name],
                 check=False,
                 capture_output=True,
                 text=True,

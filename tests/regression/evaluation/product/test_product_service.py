@@ -1,17 +1,88 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from redsentinel.application.contracts import (
     AgentOnboardingRequest,
     AgentProfile,
     AgentProfileNode,
     AgentRegistration,
-    EvaluationProgress,
     EvaluationRequest,
-    EvaluationStatus,
 )
 from redsentinel.application.engine.service import ProductEvaluationService
+
+
+def _source_request(tmp_path: Path, agent_id: str = "source_agent") -> AgentOnboardingRequest:
+    source_root = tmp_path / "source-inputs" / agent_id
+    source_root.mkdir(parents=True, exist_ok=True)
+    (source_root / "agent.py").write_text("def run(task):\n    return task\n", encoding="utf-8")
+    manifest = source_root / "sandbox-build.json"
+    manifest.write_text(
+        '{"schema_version":"agent-sandbox-build-v0.1","adapter_type":"external_sdk"}',
+        encoding="utf-8",
+    )
+    return AgentOnboardingRequest(
+        agent_id=agent_id,
+        name="Source Agent",
+        integration_type="source",
+        source_path=str(source_root),
+        build_manifest_path=str(manifest),
+    )
+
+
+def _source_request(tmp_path: Path, agent_id: str = "source_agent") -> AgentOnboardingRequest:
+    source_root = tmp_path / "source-inputs" / agent_id
+    source_root.mkdir(parents=True, exist_ok=True)
+    (source_root / "agent.py").write_text("def run(task):\n    return task\n", encoding="utf-8")
+    manifest = source_root / "sandbox-build.json"
+    manifest.write_text(
+        '{"schema_version":"agent-sandbox-build-v0.1","adapter_type":"external_sdk"}',
+        encoding="utf-8",
+    )
+    return AgentOnboardingRequest(
+        agent_id=agent_id,
+        name="Source Agent",
+        integration_type="source",
+        source_path=str(source_root),
+        build_manifest_path=str(manifest),
+    )
+
+
+def _source_request(tmp_path: Path, agent_id: str = "source_agent") -> AgentOnboardingRequest:
+    source_root = tmp_path / "source-inputs" / agent_id
+    source_root.mkdir(parents=True, exist_ok=True)
+    (source_root / "agent.py").write_text("def run(task):\n    return task\n", encoding="utf-8")
+    manifest = source_root / "sandbox-build.json"
+    manifest.write_text(
+        '{"schema_version":"agent-sandbox-build-v0.1","adapter_type":"external_sdk"}',
+        encoding="utf-8",
+    )
+    return AgentOnboardingRequest(
+        agent_id=agent_id,
+        name="Source Agent",
+        integration_type="source",
+        source_path=str(source_root),
+        build_manifest_path=str(manifest),
+    )
+
+
+def _source_request(tmp_path: Path, agent_id: str = "source_agent") -> AgentOnboardingRequest:
+    source_root = tmp_path / "source-inputs" / agent_id
+    source_root.mkdir(parents=True, exist_ok=True)
+    (source_root / "agent.py").write_text("def run(task):\n    return task\n", encoding="utf-8")
+    manifest = source_root / "sandbox-build.json"
+    manifest.write_text(
+        '{"schema_version":"agent-sandbox-build-v0.1","adapter_type":"external_sdk"}',
+        encoding="utf-8",
+    )
+    return AgentOnboardingRequest(
+        agent_id=agent_id,
+        name="Source Agent",
+        integration_type="source",
+        source_path=str(source_root),
+        build_manifest_path=str(manifest),
+    )
 
 
 def test_product_service_registers_runs_and_reports(tmp_path: Path) -> None:
@@ -73,26 +144,8 @@ def test_product_service_does_not_count_masked_support_input_as_pii_leak(tmp_pat
     assert not report.findings
 
 
-def test_hosted_api_onboarding_registers_runnable_http_adapter(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[tuple[str, str | None, dict]] = []
-
-    class FakeResponse:
-        def __enter__(self) -> "FakeResponse":
-            return self
-
-        def __exit__(self, *_args) -> None:
-            return None
-
-        def read(self) -> bytes:
-            return b'{"choices":[{"message":{"content":"Hosted API answer without raw PII."}}]}'
-
-    def fake_urlopen(request, timeout):  # noqa: ANN001
-        calls.append((request.full_url, request.get_header("Authorization"), request.data))
-        return FakeResponse()
-
-    monkeypatch.setattr("redsentinel.application.engine.hosted_adapter.urlopen", fake_urlopen)
-    service = ProductEvaluationService(storage_root=tmp_path)
-    service.onboard_agent(
+def test_onboarding_contract_rejects_hosted_api_material() -> None:
+    with pytest.raises(ValidationError, match="source"):
         AgentOnboardingRequest(
             agent_id="hosted_agent",
             name="Hosted Agent",
@@ -100,87 +153,44 @@ def test_hosted_api_onboarding_registers_runnable_http_adapter(tmp_path: Path, m
             endpoint_url="https://example.test/v1/chat/completions",
             api_key="sk-live-secret",
         )
-    )
-
-    status = service.run_evaluation(
-        EvaluationRequest(agent_id="hosted_agent", mode="hosted_api", scenarios=["support-pii-masking"])
-    )
-
-    assert status.status == "completed"
-    assert calls
-    assert calls[0][0] == "https://example.test/v1/chat/completions"
-    assert calls[0][1] == "Bearer sk-live-secret"
-    assert "sk-live-secret" not in "\n".join(path.read_text(encoding="utf-8") for path in tmp_path.rglob("*.json"))
 
 
-def test_initial_benchmark_stage_fails_without_metric_snapshot(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_source_onboarding_records_verified_snapshot(tmp_path: Path) -> None:
     service = ProductEvaluationService(storage_root=tmp_path)
-    real_run_evaluation = service.run_evaluation
+    response = service.onboard_agent(_source_request(tmp_path))
 
-    def run_without_snapshot(request: EvaluationRequest) -> EvaluationStatus:
-        status = real_run_evaluation(request)
-        snapshot_path = service.storage.metric_snapshot_path(request.tenant_id, f"snapshot-{status.evaluation_id}")
-        snapshot_path.unlink()
-        return status
+    assert response.ready is True
+    assert response.material.source_snapshot_verified is True
+    assert response.material.source_snapshot_sha256
+    assert [stage.name for stage in response.stages] == [
+        "agent_record",
+        "source_snapshot",
+        "profile_analysis",
+        "sandbox_build_plan",
+    ]
 
-    monkeypatch.setattr(service, "run_evaluation", run_without_snapshot)
 
-    response = service.onboard_agent(
+def test_source_onboarding_rejects_manifest_outside_source(tmp_path: Path) -> None:
+    service = ProductEvaluationService(storage_root=tmp_path)
+    source_root = tmp_path / "source"
+    source_root.mkdir()
+    (source_root / "agent.py").write_text("pass\n", encoding="utf-8")
+    manifest = tmp_path / "sandbox-build.json"
+    manifest.write_text(
+        '{"schema_version":"agent-sandbox-build-v0.1","adapter_type":"external_sdk"}',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="inside source_path"):
+        service.onboard_agent(
         AgentOnboardingRequest(
             agent_id="source_agent",
             name="Source Agent",
             integration_type="source",
-            source_path="src/agent",
+                source_path=str(source_root),
+                build_manifest_path=str(manifest),
+            )
         )
-    )
-    benchmark_stage = next(stage for stage in response.stages if stage.name == "initial_benchmark")
-
-    assert response.ready is False
-    assert response.status == "failed"
-    assert benchmark_stage.status == "failed"
-    assert benchmark_stage.message == "Initial benchmark completed without metric snapshot."
-    assert benchmark_stage.details["report_id"]
-    assert benchmark_stage.details["result_count"] > 0
-
-
-def test_initial_benchmark_stage_fails_without_report_artifact(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    service = ProductEvaluationService(storage_root=tmp_path)
-
-    def completed_without_report(request: EvaluationRequest) -> EvaluationStatus:
-        return EvaluationStatus(
-            evaluation_id="eval_missing_report",
-            tenant_id=request.tenant_id,
-            agent_id=request.agent_id,
-            benchmark_id=request.benchmark_id,
-            benchmark_version=request.benchmark_version,
-            status="completed",
-            progress=EvaluationProgress(total_cases=2, completed_cases=2, percent=100.0),
-            report_id="eval_missing_report",
-            report_path=str(tmp_path / "missing-report.json"),
-        )
-
-    monkeypatch.setattr(service, "run_evaluation", completed_without_report)
-
-    response = service.onboard_agent(
-        AgentOnboardingRequest(
-            agent_id="source_agent",
-            name="Source Agent",
-            integration_type="source",
-            source_path="src/agent",
-        )
-    )
-    benchmark_stage = next(stage for stage in response.stages if stage.name == "initial_benchmark")
-
-    assert response.ready is False
-    assert response.status == "failed"
-    assert benchmark_stage.status == "failed"
-    assert benchmark_stage.message == "Initial benchmark completed without report artifact."
 
 
 def test_dashboard_summary_can_use_metric_snapshot_without_report(tmp_path: Path) -> None:

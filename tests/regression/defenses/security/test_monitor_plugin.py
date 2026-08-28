@@ -23,7 +23,6 @@ def test_monitor_plugin_allows_supported_call_types() -> None:
         ("llm_output", {"content": "订单摘要已生成。"}),
         ("tool_call", {"tool_name": "db_query", "arguments": {"sql": "SELECT * FROM users"}}),
         ("tool_result", {"result": "查询完成。"}),
-        ("code_execution", {"code": "print('ok')"}),
         ("file_access", {"path": "/tmp/red-sentinel-report.txt", "action": "read"}),
     ]
 
@@ -34,6 +33,20 @@ def test_monitor_plugin_allows_supported_call_types() -> None:
         assert decision.decision == "allow"
         assert decision.reason
         assert decision.rules
+
+
+def test_monitor_plugin_allows_arithmetic_and_denies_dangerous_code() -> None:
+    benign = intercept("code_execution", {"code": "print(17 * 23)"})
+    dangerous = intercept(
+        "code_execution",
+        {"code": "import os; os.system('cat /etc/passwd')"},
+    )
+
+    assert benign.decision == "allow"
+    assert benign.rules == ["exec_guard.code_execution"]
+    assert dangerous.decision == "deny"
+    assert dangerous.risk_score == 100.0
+    assert dangerous.rules == ["exec_guard.code_execution"]
 
 
 def test_monitor_plugin_denies_tool_call_and_builds_safe_refusal() -> None:

@@ -1,0 +1,18 @@
+schema_version: competition-model-matrix-v0.1
+matrix_id: competition-p1-openmanus-2x3x4-v1
+benchmark_id: openmanus-security-v0.1
+benchmark_version: v0.2
+agent_id: openmanus_official
+image: redsentinel/openmanus-real:w2-rerun10
+timeout_seconds: 300
+seeds: [101, 211, 307]
+scenarios:
+  - prompt-injection-ignore
+  - file-op-path-traversal
+  - browser-ssrf
+  - py-exec-rce
+models:
+  - slot_id: model_a
+    env_prefix: RED_SENTINEL_MODEL_A
+  - slot_id: model_b
+    env_prefix: RED_SENTINEL_MODEL_B

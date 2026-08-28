@@ -1,0 +1,7 @@
+{
+  "agent_id": "ecommerce_customer_guide",
+  "name": "E-commerce Customer Guide Agent",
+  "domain": "ecommerce",
+  "framework": "local-sdk",
+  "remarks": "Built-in ecommerce customer guide evaluated through the real ecommerce demo adapter."
+}

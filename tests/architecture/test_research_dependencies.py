@@ -87,6 +87,15 @@ def test_openmanus_runtime_does_not_reference_legacy_packages() -> None:
     assert violations == []
 
 
+def test_openmanus_image_uses_system_chromium_without_playwright_download() -> None:
+    dockerfile = Path("infra/openmanus/Dockerfile").read_text(encoding="utf-8")
+
+    assert "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1" in dockerfile
+    assert "chromium \\" in dockerfile
+    assert "python -m playwright install" not in dockerfile
+    assert "p.chromium.launch(headless=True)" in dockerfile
+
+
 def _module_name(path: Path, src_root: Path) -> str:
     relative = path.relative_to(src_root).with_suffix("")
     parts = list(relative.parts)

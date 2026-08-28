@@ -2,9 +2,14 @@
 
 ## Overview
 
-`frontend/index.html` 是可选的研究结果展示 dashboard，包含公开首页、登录/注册认证页和登录后可访问的 Agent 安全评测工作区。它不是研究算法或指标计算的实现层；工作区只展示结构化 `AgentSecurityReport` 和实验产物，并通过同源 `/v1/...` Product API 完成 Agent 接入、评测、报告、日志和 next-round 操作。
+`frontend/index.html` 是 Sentinel-Guardian 竞赛审计工作区，包含公开首页、登录/注册
+认证页和登录后可访问的 Agent 安全审计页面。它不负责计算审计指标；工作区展示结构化
+`AgentSecurityReport` 和证据产物，并通过同源 `/v1/...` API 完成 Agent 接入、评测、
+报告、日志和复测操作。
 
-当前继续保留单文件实现以维持离线演示和既有交付兼容。新增研究逻辑不得写入该文件；后续只有在交互继续扩展时，才按 `auth`、`api`、`report`、`supervision` 四个边界拆分前端模块。
+当前继续保留单文件实现以维持离线演示和既有交付兼容。审计编排和指标逻辑不得写入
+该文件；后续只有在比赛交互继续扩展时，才按 `auth`、`api`、`report`、
+`supervision` 四个边界拆分前端模块。
 
 ## Product Views
 
@@ -14,6 +19,8 @@
 | 登录页 | `#login` | 公开 | 校验账号和密码，调用 `POST /v1/auth/login`，成功后进入工作区。 |
 | 注册页 | `#register` | 公开 | 校验用户名、邮箱、密码、确认密码和协议确认，调用 `POST /v1/auth/register`，成功后进入工作区。 |
 | 产品工作区 | `#product-workspace` | 需要 JWT | 未登录访问会跳转登录页；已登录后展示当前用户名和退出登录入口。 |
+| 安全测试计划 | `#audit-plan` | 需要 JWT | 按 Audit ID 展示计划理由、优先级、预算、正常任务和停止条件。 |
+| C5 审计工作区 | `#audit-workspace-c5` | 需要 JWT | 创建或选择审计，展示资产、评分、时间线、轨迹、风险复测、决策和证据。 |
 
 ## Authentication And Storage
 
@@ -23,11 +30,45 @@
 - 登录时未勾选“记住登录状态”：token 写入 `sessionStorage`，浏览器会话结束后失效。
 - 注册成功后直接进入登录态，当前实现按非记住登录处理，token 写入 `sessionStorage`。
 - 前端启动时会用 `GET /v1/auth/me` 校验已保存 token；无效或过期会清理本地 token。
-- 受保护工作区请求会携带 `Authorization: Bearer <token>`，包括 Agent 接入、dashboard summary、评测、报告、日志和 next-round。
+- 受保护工作区请求会携带 `Authorization: Bearer <token>`，包括 Agent 接入、审计创建与查询、dashboard summary、评测、报告、日志和 next-round。
 - 退出登录会调用 `POST /v1/auth/logout`，随后清理 `localStorage` 和 `sessionStorage` 中的 token，并回到公开首页。
 - API Key 只随 Agent 接入请求提交给后端，不写入浏览器存储。
 
 ## Data Contract
+
+### AuditWorkspaceView → C5 Workspace Mapping
+
+| Workspace Field | View Component |
+|---|---|
+| `task` / `profile` | 资产、授权风险面和 Benchmark |
+| `plan` | 计划场景和风险节点 |
+| `status.stages[]` | 阶段时间线、attempt、耗时和错误 |
+| `baseline_report` / `guarded_report` | 场景攻击效果与复测状态 |
+| `comparison` | Security Score 前后对比和风险变化 |
+| `baseline_report.deterministic_metrics` / `guarded_report.deterministic_metrics` | ASR、DSR、FPR 对比条 |
+| `traces[].events[]` | LLM、工具、文件、网络和 Guard 折叠轨迹与统一时间线 |
+| `decision` | 四态上线结论、理由、限制和效用 |
+| `evidence.artifacts[]` | 文件可用性、引用与 SHA-256 |
+
+工作区主体通过 `GET /v1/audits/{audit_id}/workspace` 一次读取；审计选择器通过
+`GET /v1/audits` 读取当前 JWT 租户列表。创建表单调用 `POST /v1/audits`，前端不接受
+或持久化用户提交的 `tenant_id`。
+
+轨迹文件只由后端在当前 JWT 租户目录内读取。工作区接收的是限长、敏感键脱敏的
+`AuditScenarioTrace` 摘要；路径越界、文件缺失或 JSON 无效时返回 `available=false`，
+前端不回退到 mock 轨迹。
+
+轨迹文件只由后端在当前 JWT 租户目录内读取。工作区接收的是限长、敏感键脱敏的
+`AuditScenarioTrace` 摘要；路径越界、文件缺失或 JSON 无效时返回 `available=false`，
+前端不回退到 mock 轨迹。
+
+轨迹文件只由后端在当前 JWT 租户目录内读取。工作区接收的是限长、敏感键脱敏的
+`AuditScenarioTrace` 摘要；路径越界、文件缺失或 JSON 无效时返回 `available=false`，
+前端不回退到 mock 轨迹。
+
+轨迹文件只由后端在当前 JWT 租户目录内读取。工作区接收的是限长、敏感键脱敏的
+`AuditScenarioTrace` 摘要；路径越界、文件缺失或 JSON 无效时返回 `available=false`，
+前端不回退到 mock 轨迹。
 
 ### AgentSecurityReport → View Mapping
 

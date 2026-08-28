@@ -27,6 +27,7 @@
     ],
     "redsentinel.application": [
       "AgentManagementService",
+      "AuditApplicationService",
       "EvaluationApplicationService",
       "ProductApplicationService",
       "ReportingApplicationService"

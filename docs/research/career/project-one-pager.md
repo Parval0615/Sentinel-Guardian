@@ -32,11 +32,11 @@ Agent 物料与配置
 - Direct API、LangGraph、Docker、HTTP、SDK 和 OpenManus adapter；
 - 多 seed 统计、置信区间、效应量、配对置换检验和论文图表入口。
 
-## P0 已验证结果
+## 当前已验证结果
 
 | 证据 | 结果 | 模式 | 使用边界 |
 |---|---:|---|---|
-| 默认离线测试 | 752 passed | `offline_fixture` | P0 工程回归 |
+| 默认全量测试 | 778 passed | 本地默认测试 | 当前工程回归 |
 | 配对单轮 smoke | 3/3 passed，FPR 0 | `offline_fixture` | 链路验证 |
 | 协同进化 smoke | ASR 43.75% -> 0%，7 轮 | `offline_fixture` | 算法 smoke |
 | 研究设计 | 4 类基线、5 类消融 | 配置与测试 | 实验能力 |

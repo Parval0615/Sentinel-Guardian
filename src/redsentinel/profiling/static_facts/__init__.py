@@ -1,0 +1,46 @@
+"""Versioned, evidence-bound static facts extracted from image root filesystems."""
+
+from redsentinel.profiling.static_facts.extractor import StaticExtractionLimits, extract_static_facts
+from redsentinel.profiling.static_facts.models import (
+    CallFact,
+    CapabilityFact,
+    CapabilityKind,
+    ClassBaseFact,
+    ConfigFact,
+    DecoratorFact,
+    DependencyFact,
+    EntrypointFact,
+    EntrypointKind,
+    EvidencedFact,
+    ImportFact,
+    ModuleFact,
+    SourceKind,
+    SourceRecovery,
+    StaticAnalysisLimitation,
+    StaticFactIndex,
+    SymbolFact,
+    SymbolKind,
+)
+
+__all__ = [
+    "CallFact",
+    "CapabilityFact",
+    "CapabilityKind",
+    "ClassBaseFact",
+    "ConfigFact",
+    "DecoratorFact",
+    "DependencyFact",
+    "EntrypointFact",
+    "EntrypointKind",
+    "EvidencedFact",
+    "ImportFact",
+    "ModuleFact",
+    "SourceKind",
+    "SourceRecovery",
+    "StaticAnalysisLimitation",
+    "StaticExtractionLimits",
+    "StaticFactIndex",
+    "SymbolFact",
+    "SymbolKind",
+    "extract_static_facts",
+]

@@ -8,6 +8,10 @@ from typing import Any, Literal, cast
 from uuid import uuid4
 
 from redsentinel.defenses.guards import check_malicious_input, check_output_compliance
+from redsentinel.defenses.engine.security.exec_guard import (
+    CodeExecutionRequest,
+    evaluate_code_execution,
+)
 from redsentinel.defenses.policy.engine import check_policy
 
 # Trajectory anomaly scoring remains optional during the defense migration. It
@@ -68,7 +72,9 @@ def intercept(call_type: CallType | str, payload: dict[str, Any] | str | None = 
 
     if normalized_call_type == "llm_input":
         return _intercept_llm_input(normalized_payload)
-    if normalized_call_type in {"llm_output", "tool_result", "code_execution"}:
+    if normalized_call_type == "code_execution":
+        return _intercept_code_execution(normalized_payload)
+    if normalized_call_type in {"llm_output", "tool_result"}:
         decision = _intercept_text_boundary(normalized_call_type, normalized_payload)
         return _apply_trajectory_anomaly(normalized_call_type, normalized_payload, decision)
     if normalized_call_type == "tool_call":
@@ -115,6 +121,34 @@ def _intercept_text_boundary(call_type: str, payload: dict[str, Any]) -> Decisio
     if not compliant:
         return _decision("deny", reason, 80.0, 0.85, [f"{call_type}.output_compliance"])
     return _decision("allow", f"{call_type} allowed.", 0.0, 0.9, [f"{call_type}.allowed"])
+
+
+def _intercept_code_execution(payload: dict[str, Any]) -> Decision:
+    code = _payload_text(payload).strip()
+    if not code:
+        return _decision(
+            "deny",
+            "Code execution payload is missing code.",
+            80.0,
+            0.95,
+            ["exec_guard.missing_code"],
+        )
+    guard = evaluate_code_execution(
+        CodeExecutionRequest(
+            code=code,
+            language=str(payload.get("language") or "python"),
+            entrypoint=_first_str(payload, "entrypoint") or None,
+            working_dir=_first_str(payload, "working_dir") or None,
+        )
+    )
+    decision = _decision(
+        guard.decision,
+        guard.reason,
+        _risk_score_from_level(guard.risk_level),
+        0.95,
+        ["exec_guard.code_execution"],
+    )
+    return _apply_trajectory_anomaly("code_execution", payload, decision)
 
 
 def _intercept_tool_call(payload: dict[str, Any]) -> Decision:

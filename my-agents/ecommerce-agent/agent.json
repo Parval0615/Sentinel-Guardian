@@ -1,0 +1,7 @@
+{
+  "agent_id": "ecommerce_customer_guide",
+  "name": "电商客服 Agent",
+  "domain": "ecommerce",
+  "framework": "local-sdk",
+  "remarks": "External catalog entry for the deterministic ecommerce demo adapter."
+}

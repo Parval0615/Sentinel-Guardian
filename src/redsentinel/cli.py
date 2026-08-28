@@ -12,6 +12,8 @@ import sys
 from pathlib import Path
 from typing import Any, Callable, Sequence
 
+from redsentinel.application.audit_contracts import AuditTask
+from redsentinel.application import ProductApplicationService
 from redsentinel.core.models import ExperimentManifest
 from redsentinel.profiling import build_agent_security_profile, load_agent_config, validate_agent_config
 from redsentinel.research.analysis import analyze_files, write_analysis_artifacts
@@ -38,6 +40,18 @@ def build_parser() -> argparse.ArgumentParser:
     profile.add_argument("config", type=Path)
     profile.add_argument("--output", type=Path)
     profile.set_defaults(handler=_profile)
+
+    audit = _command_parser(
+        subparsers,
+        "audit",
+        "Run or resume an autonomous pre-deployment security audit.",
+        allow_external_model=False,
+    )
+    audit.add_argument("task", nargs="?", type=Path, help="Path to an audit-task-v0.1 JSON file.")
+    audit.add_argument("--resume", metavar="AUDIT_ID")
+    audit.add_argument("--tenant-id", default="private_tenant")
+    audit.add_argument("--storage-root", type=Path, default=Path("runs/product"))
+    audit.set_defaults(handler=_audit, external_model_config=None)
 
     evaluate = _command_parser(subparsers, "evaluate", "Run the deterministic single-round evaluation smoke.")
     evaluate.set_defaults(handler=_evaluate)
@@ -144,6 +158,52 @@ def _profile(args: argparse.Namespace) -> int:
     _print_common(args, mode="profile", output=output)
     print(f"NODES={len(profile.nodes)}")
     return EXIT_OK
+
+
+def _audit(args: argparse.Namespace) -> int:
+    if args.resume:
+        if args.task is not None:
+            raise ValueError("task path cannot be combined with --resume")
+        if args.dry_run:
+            _print_common(args, mode="audit-resume", output=args.storage_root)
+            print(f"AUDIT_ID={args.resume}")
+            print("EXECUTION=skipped")
+            return EXIT_OK
+        application = ProductApplicationService(storage_root=args.storage_root)
+        run = application.resume_audit(args.resume, tenant_id=args.tenant_id)
+    else:
+        if args.task is None:
+            raise ValueError("audit task path is required unless --resume is used")
+        if not args.task.is_file():
+            raise ValueError(f"audit task does not exist: {args.task}")
+        task = AuditTask.model_validate_json(args.task.read_text(encoding="utf-8"))
+        if args.dry_run:
+            output = args.storage_root / task.tenant_id / "audits" / task.audit_id
+            _print_common(args, mode="audit", output=output)
+            print(f"AUDIT_ID={task.audit_id}")
+            print(f"AGENT_ID={task.agent_id}")
+            print("TASK_VALID=true")
+            print("EXECUTION=skipped")
+            return EXIT_OK
+        application = ProductApplicationService(storage_root=args.storage_root)
+        application.create_audit(task)
+        run = application.run_audit(task.audit_id, tenant_id=task.tenant_id)
+
+    _print_common(args, mode="audit", output=application.storage.audit_dir(run.tenant_id, run.audit_id))
+    status = application.get_audit_status(run.audit_id, tenant_id=run.tenant_id)
+    print(f"AUDIT_ID={run.audit_id}")
+    print(f"STATE={run.state}")
+    print(f"PROGRESS={status.progress_percent:.1f}%")
+    print(f"DURATION_MS={status.total_duration_ms}")
+    if status.evidence_index_ref:
+        print(f"EVIDENCE_INDEX={status.evidence_index_ref}")
+    if run.decision_ref:
+        decision = application.get_audit_decision(run.audit_id, tenant_id=run.tenant_id)
+        print(f"DECISION={decision.decision}")
+        print(f"DECISION_PATH={run.decision_ref}")
+    if run.error:
+        print(f"ERROR={run.error}", file=sys.stderr)
+    return EXIT_EXECUTION_ERROR if run.state == "failed" else EXIT_OK
 
 
 def _evaluate(args: argparse.Namespace) -> int:
@@ -424,7 +484,7 @@ def _cli_manifest(
         metadata["external_model"] = json.loads(args.external_model_config.read_text(encoding="utf-8"))
     return ExperimentManifest(
         experiment_id=experiment_id,
-        research_question=f"Formal {command} run through the unified research CLI.",
+        research_question=f"Compatibility {command} run through the unified audit CLI.",
         agent_profile_ref="builtin:deterministic-offline-fixture",
         dataset_refs=dataset_refs,
         attack_strategy={"name": command},

@@ -1,10 +1,16 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import threading
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
+from uuid import uuid4
+
+import fcntl
 
 from redsentinel.application.contracts import AgentLibraryEntry, AuthUserRecord
 
@@ -25,12 +31,198 @@ class ProductStorage:
     def __init__(self, storage_root: str | Path = "runs/product") -> None:
         self.root = Path(storage_root)
         self.root.mkdir(parents=True, exist_ok=True)
+        self._image_profile_locks: dict[Path, threading.Lock] = {}
+        self._image_profile_locks_guard = threading.Lock()
 
     def tenant_dir(self, tenant_id: str) -> Path:
         return self.root / safe_component(tenant_id, "tenant_id")
 
     def agent_path(self, tenant_id: str, agent_id: str) -> Path:
         return self.tenant_dir(tenant_id) / "agents" / f"{safe_component(agent_id, 'agent_id')}.json"
+
+    def agent_asset_index_path(self, tenant_id: str, agent_id: str) -> Path:
+        return (
+            self.tenant_dir(tenant_id)
+            / "agent_asset_index"
+            / "current"
+            / f"{safe_component(agent_id, 'agent_id')}.json"
+        )
+
+    def agent_asset_index_version_path(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        digest_suffix: str,
+    ) -> Path:
+        return (
+            self.tenant_dir(tenant_id)
+            / "agent_asset_index"
+            / "versions"
+            / safe_component(agent_id, "agent_id")
+            / f"{safe_component(digest_suffix, 'digest_suffix')}.json"
+        )
+
+    def agent_asset_index_errors_path(self, tenant_id: str) -> Path:
+        return self.tenant_dir(tenant_id) / "agent_asset_index" / "errors.json"
+
+    def agent_asset_suppression_path(self, tenant_id: str, agent_id: str) -> Path:
+        return (
+            self.tenant_dir(tenant_id)
+            / "agent_asset_index"
+            / "suppressed"
+            / f"{safe_component(agent_id, 'agent_id')}.json"
+        )
+
+    def managed_agent_assets_dir(self, tenant_id: str) -> Path:
+        return self.tenant_dir(tenant_id) / "managed_agent_assets"
+
+    def managed_agent_asset_dir(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        digest_suffix: str,
+    ) -> Path:
+        return (
+            self.managed_agent_assets_dir(tenant_id)
+            / safe_component(agent_id, "agent_id")
+            / safe_component(digest_suffix, "digest_suffix")
+        )
+
+    def image_profile_dir(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        digest_suffix: str,
+    ) -> Path:
+        return (
+            self.tenant_dir(tenant_id)
+            / "image_profiles"
+            / safe_component(agent_id, "agent_id")
+            / safe_component(digest_suffix, "digest_suffix")
+        )
+
+    def image_profile_status_path(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        digest_suffix: str,
+    ) -> Path:
+        return self.image_profile_dir(tenant_id, agent_id, digest_suffix) / "status.json"
+
+    def image_profile_latest_path(self, tenant_id: str, agent_id: str) -> Path:
+        return (
+            self.tenant_dir(tenant_id)
+            / "image_profiles"
+            / safe_component(agent_id, "agent_id")
+            / "latest.json"
+        )
+
+    def image_profile_checkpoint_path(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        digest_suffix: str,
+        stage: str,
+    ) -> Path:
+        return (
+            self.image_profile_dir(tenant_id, agent_id, digest_suffix)
+            / "checkpoints"
+            / f"{safe_component(stage, 'stage')}.json"
+        )
+
+    def image_profile_artifact_path(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        digest_suffix: str,
+        name: str,
+    ) -> Path:
+        return (
+            self.image_profile_dir(tenant_id, agent_id, digest_suffix)
+            / "artifacts"
+            / f"{safe_component(name, 'artifact_name')}.json"
+        )
+
+    def image_profile_unpack_root(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        digest_suffix: str,
+    ) -> Path:
+        return self.image_profile_dir(tenant_id, agent_id, digest_suffix) / "unpack"
+
+    def image_profile_lease_path(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        digest_suffix: str,
+    ) -> Path:
+        return self.image_profile_dir(tenant_id, agent_id, digest_suffix) / "lease.json"
+
+    @contextmanager
+    def image_profile_lease(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        digest_suffix: str,
+    ) -> Iterator[bool]:
+        path = self.image_profile_lease_path(tenant_id, agent_id, digest_suffix)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with self._image_profile_locks_guard:
+            process_lock = self._image_profile_locks.setdefault(
+                path,
+                threading.Lock(),
+            )
+        if not process_lock.acquire(blocking=False):
+            yield False
+            return
+        handle = path.open("a+", encoding="utf-8")
+        try:
+            try:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                yield False
+                return
+            acquired_at = datetime.now(timezone.utc).isoformat()
+            handle.seek(0)
+            handle.truncate()
+            json.dump(
+                {
+                    "schema_version": "image-profile-lease-v0.1",
+                    "pid": os.getpid(),
+                    "acquired_at": acquired_at,
+                    "released_at": None,
+                },
+                handle,
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+            handle.flush()
+            os.fsync(handle.fileno())
+            try:
+                yield True
+            finally:
+                handle.seek(0)
+                handle.truncate()
+                json.dump(
+                    {
+                        "schema_version": "image-profile-lease-v0.1",
+                        "pid": os.getpid(),
+                        "acquired_at": acquired_at,
+                        "released_at": datetime.now(timezone.utc).isoformat(),
+                    },
+                    handle,
+                    ensure_ascii=False,
+                    indent=2,
+                    sort_keys=True,
+                )
+                handle.flush()
+                os.fsync(handle.fileno())
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        finally:
+            handle.close()
+            process_lock.release()
 
     def user_path(self, user_id: str) -> Path:
         return self.root / "users" / f"{safe_component(user_id, 'user_id')}.json"
@@ -81,6 +273,78 @@ class ProductStorage:
     def evaluation_dir(self, tenant_id: str, evaluation_id: str) -> Path:
         return self.tenant_dir(tenant_id) / "evaluations" / safe_component(evaluation_id, "evaluation_id")
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def audit_dir(self, tenant_id: str, audit_id: str) -> Path:
+        return self.tenant_dir(tenant_id) / "audits" / safe_component(audit_id, "audit_id")
+
+    def audit_record_path(self, tenant_id: str, audit_id: str) -> Path:
+        return self.audit_dir(tenant_id, audit_id) / "audit.json"
+
+    def audit_task_path(self, tenant_id: str, audit_id: str) -> Path:
+        return self.audit_dir(tenant_id, audit_id) / "task.json"
+
+    def audit_plan_path(self, tenant_id: str, audit_id: str) -> Path:
+        return self.audit_dir(tenant_id, audit_id) / "plan.json"
+
+    def audit_planner_call_path(self, tenant_id: str, audit_id: str) -> Path:
+        return self.audit_dir(tenant_id, audit_id) / "planner-call.json"
+
+    def audit_defense_plan_path(self, tenant_id: str, audit_id: str) -> Path:
+        return self.audit_dir(tenant_id, audit_id) / "defense-plan.json"
+
+    def audit_remediation_bundle_path(self, tenant_id: str, audit_id: str) -> Path:
+        return self.audit_dir(tenant_id, audit_id) / "remediation-bundle.json"
+
+    def audit_remediation_policy_path(self, tenant_id: str, audit_id: str) -> Path:
+        return self.audit_dir(tenant_id, audit_id) / "sandbox" / "remediation-policy.json"
+
+    def audit_remediation_installation_path(self, tenant_id: str, audit_id: str) -> Path:
+        return self.audit_dir(tenant_id, audit_id) / "remediation-installation.json"
+
+    def audit_decision_path(self, tenant_id: str, audit_id: str) -> Path:
+        return self.audit_dir(tenant_id, audit_id) / "release-decision.json"
+
+    def audit_evidence_index_path(self, tenant_id: str, audit_id: str) -> Path:
+        return self.audit_dir(tenant_id, audit_id) / "evidence-index.json"
+
+    def audit_record_paths(self, tenant_id: str) -> list[Path]:
+        return sorted((self.tenant_dir(tenant_id) / "audits").glob("*/audit.json"))
+
     def evaluation_record_path(self, tenant_id: str, evaluation_id: str) -> Path:
         return self.evaluation_dir(tenant_id, evaluation_id) / "evaluation.json"
 
@@ -128,7 +392,15 @@ class ProductStorage:
 
     def write_json(self, path: Path, payload: dict[str, Any]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+        temporary = path.with_name(f".{path.name}.{uuid4().hex}.tmp")
+        try:
+            temporary.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True),
+                encoding="utf-8",
+            )
+            os.replace(temporary, path)
+        finally:
+            temporary.unlink(missing_ok=True)
 
     def write_user(self, user_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         document = dict(payload)
@@ -232,6 +504,196 @@ class ProductStorage:
 
     def read_profile(self, tenant_id: str, profile_id: str) -> dict[str, Any]:
         return self.read_json(self.profile_path(tenant_id, profile_id))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def write_audit(self, tenant_id: str, audit_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._write_document(
+            self.audit_record_path(tenant_id, audit_id),
+            payload,
+            schema_version="audit-run-v0.1",
+            tenant_id=tenant_id,
+            audit_id=audit_id,
+        )
+
+    def read_audit(self, tenant_id: str, audit_id: str) -> dict[str, Any]:
+        return self.read_json(self.audit_record_path(tenant_id, audit_id))
+
+    def list_audits(self, tenant_id: str) -> list[dict[str, Any]]:
+        return [self.read_json(path) for path in self.audit_record_paths(tenant_id)]
+
+    def write_audit_task(self, tenant_id: str, audit_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._write_document(
+            self.audit_task_path(tenant_id, audit_id),
+            payload,
+            schema_version="audit-task-v0.1",
+            tenant_id=tenant_id,
+            audit_id=audit_id,
+        )
+
+    def read_audit_task(self, tenant_id: str, audit_id: str) -> dict[str, Any]:
+        return self.read_json(self.audit_task_path(tenant_id, audit_id))
+
+    def write_audit_plan(self, tenant_id: str, audit_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        document = sanitize_secret_fields(payload)
+        self.write_json(self.audit_plan_path(tenant_id, audit_id), document)
+        return document
+
+    def read_audit_plan(self, tenant_id: str, audit_id: str) -> dict[str, Any]:
+        return self.read_json(self.audit_plan_path(tenant_id, audit_id))
+
+    def write_audit_planner_call(
+        self,
+        tenant_id: str,
+        audit_id: str,
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_document(
+            self.audit_planner_call_path(tenant_id, audit_id),
+            payload,
+            schema_version="audit-planner-call-evidence-v0.1",
+            tenant_id=tenant_id,
+            audit_id=audit_id,
+        )
+
+    def read_audit_planner_call(self, tenant_id: str, audit_id: str) -> dict[str, Any]:
+        return self.read_json(self.audit_planner_call_path(tenant_id, audit_id))
+
+    def write_audit_defense_plan(
+        self,
+        tenant_id: str,
+        audit_id: str,
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        document = sanitize_secret_fields(payload)
+        self.write_json(self.audit_defense_plan_path(tenant_id, audit_id), document)
+        return document
+
+    def read_audit_defense_plan(self, tenant_id: str, audit_id: str) -> dict[str, Any]:
+        return self.read_json(self.audit_defense_plan_path(tenant_id, audit_id))
+
+    def write_audit_remediation_bundle(
+        self,
+        tenant_id: str,
+        audit_id: str,
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        document = sanitize_secret_fields(payload)
+        self.write_json(self.audit_remediation_bundle_path(tenant_id, audit_id), document)
+        return document
+
+    def read_audit_remediation_bundle(
+        self,
+        tenant_id: str,
+        audit_id: str,
+    ) -> dict[str, Any]:
+        return self.read_json(self.audit_remediation_bundle_path(tenant_id, audit_id))
+
+    def write_audit_remediation_installation(
+        self,
+        tenant_id: str,
+        audit_id: str,
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        document = sanitize_secret_fields(payload)
+        self.write_json(
+            self.audit_remediation_installation_path(tenant_id, audit_id),
+            document,
+        )
+        return document
+
+    def read_audit_remediation_installation(
+        self,
+        tenant_id: str,
+        audit_id: str,
+    ) -> dict[str, Any]:
+        return self.read_json(
+            self.audit_remediation_installation_path(tenant_id, audit_id)
+        )
+
+    def write_audit_decision(
+        self,
+        tenant_id: str,
+        audit_id: str,
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        return self._write_document(
+            self.audit_decision_path(tenant_id, audit_id),
+            payload,
+            schema_version="release-decision-v0.1",
+            audit_id=audit_id,
+        )
+
+    def read_audit_decision(self, tenant_id: str, audit_id: str) -> dict[str, Any]:
+        return self.read_json(self.audit_decision_path(tenant_id, audit_id))
+
+    def write_audit_evidence_index(
+        self,
+        tenant_id: str,
+        audit_id: str,
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        document = sanitize_secret_fields(payload)
+        self.write_json(self.audit_evidence_index_path(tenant_id, audit_id), document)
+        return document
+
+    def read_audit_evidence_index(self, tenant_id: str, audit_id: str) -> dict[str, Any]:
+        return self.read_json(self.audit_evidence_index_path(tenant_id, audit_id))
 
     def write_benchmark(self, benchmark_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         path = self.benchmark_path(benchmark_id)

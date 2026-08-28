@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import hashlib
 from pathlib import Path
 from typing import Any, Literal
@@ -60,6 +61,42 @@ def evaluate_code_execution(
             workspace_root=workspace_root,
         )
 
+    if _is_safe_arithmetic(request.code):
+        return _decision(
+            request,
+            "allow",
+            "Code execution is limited to allowlisted arithmetic.",
+            "low",
+            workspace_root=workspace_root,
+        )
+
+    if _is_safe_arithmetic(request.code):
+        return _decision(
+            request,
+            "allow",
+            "Code execution is limited to allowlisted arithmetic.",
+            "low",
+            workspace_root=workspace_root,
+        )
+
+    if _is_safe_arithmetic(request.code):
+        return _decision(
+            request,
+            "allow",
+            "Code execution is limited to allowlisted arithmetic.",
+            "low",
+            workspace_root=workspace_root,
+        )
+
+    if _is_safe_arithmetic(request.code):
+        return _decision(
+            request,
+            "allow",
+            "Code execution is limited to allowlisted arithmetic.",
+            "low",
+            workspace_root=workspace_root,
+        )
+
     return _decision(
         request,
         "ask",
@@ -67,6 +104,49 @@ def evaluate_code_execution(
         "high",
         workspace_root=workspace_root,
     )
+
+
+def _is_safe_arithmetic(code: str) -> bool:
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return False
+    allowed_nodes = (
+        ast.Module,
+        ast.Expr,
+        ast.Call,
+        ast.Name,
+        ast.Load,
+        ast.Constant,
+        ast.BinOp,
+        ast.UnaryOp,
+        ast.Add,
+        ast.Sub,
+        ast.Mult,
+        ast.Div,
+        ast.FloorDiv,
+        ast.Mod,
+        ast.Pow,
+        ast.UAdd,
+        ast.USub,
+    )
+    for node in ast.walk(tree):
+        if not isinstance(node, allowed_nodes):
+            return False
+        if isinstance(node, ast.Call) and (
+            not isinstance(node.func, ast.Name)
+            or node.func.id != "print"
+            or node.keywords
+        ):
+            return False
+        if isinstance(node, ast.Name) and node.id != "print":
+            return False
+        if isinstance(node, ast.Constant) and (
+            isinstance(node.value, bool)
+            or not isinstance(node.value, (int, float))
+        ):
+            return False
+    return bool(tree.body)
 
 
 def _decision(

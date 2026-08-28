@@ -1,107 +1,94 @@
-# RedSentinel 复现说明
+# Sentinel-Guardian 复现说明
 
-## 环境要求
+## 环境
 
 - Python 3.10+
-- Windows PowerShell 或兼容 shell
-- 推荐从项目根目录 `D:\AI-System` 运行命令
-- 无需真实外部服务；核心离线链路支持 `--offline`
+- 离线演示不需要网络、Docker 或 API key
+- 真实 OpenManus 运行需要 Docker daemon、固定镜像和显式模型配置
 
-## 安装
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e ".[all,dev]"
-```
-
-> **注意**：全量测试通过需安装 `.[all,dev]`（包含 attack/defense/evaluation/product 全部可选依赖）。若只安装 `.[dev]`，核心竞赛命令仍可运行，但部分测试会因缺少可选依赖而跳过。
-
-## 竞赛主链路复现
-
-```powershell
-python run-demo.py
-python run-comp2.py --offline
-python run-comp3.py --offline
-python run-comp4.py --offline
-```
-
-## 真实 OpenManus 开源 Agent 复现
-
-OpenManus 真实接入不使用 fixture 或模拟工具调用。运行前需要 Docker，并提供 OpenAI-compatible 模型配置：
+安装完整依赖：
 
 ```bash
-export OPENAI_API_KEY="..."
-export OPENAI_BASE_URL="https://api.openai.com/v1"
-export OPENAI_MODEL="gpt-4o-mini"
-python run-openmanus-real.py --build-image --require-real
+python -m pip install -e ".[all,dev]"
 ```
 
-预期摘要：
+## 当前主链路
 
-- `OPENMANUS_REAL_RUNTIME=true`
-- `SIMULATED=false`
-- 生成 `openmanus-security-v0.1` 的 baseline/guarded 全量报告。
-- 报告路径打印为 `REPORT_PATH=.../agent-security-report-v0.1.json`。
+环境检查：
 
-如果输出或报告中包含 `offline fixture result` / `OpenManus simulated`，该产物不能作为真实 OpenManus 证据。
-
-一键复现所有实验：
-
-```powershell
-bash reproduce-all.sh
+```bash
+redsentinel doctor --dry-run
 ```
 
-预期摘要：
+五分钟离线审计演示：
 
-- `run-demo.py`：生成 trace、report、guard decisions 和 audit refs，证明旁路监督闭环跑通。
-- `run-openmanus-real.py --build-image --require-real`：真实运行 vendored OpenManus，并生成 baseline/guarded 攻防报告。
-- `run-comp2.py --offline`：攻击面覆盖 7/7，reflection gain +5。
-- `run-comp3.py --offline`：Adaptive Defense ASR 44% → 0%，精准加固误伤率 0%。
-- `run-comp4.py --offline`：输出收敛曲线、损伤雷达图、消融实验和数据卡。
-
-## 产品评估 demo
-
-```powershell
-python -m auto_evaluation_system.product_api.demo
+```bash
+redsentinel demo --output-dir artifacts --seed 42
 ```
 
-如果只在源码目录直接运行：
+该命令执行：
 
-```powershell
-$env:PYTHONPATH="auto_evaluation_system/src;auto_defense_system/src;sdk/python/src"; python -m auto_evaluation_system.product_api.demo
+```text
+doctor -> profile -> paired evaluation -> co-evolution -> evidence summary
 ```
 
-## Agent Onboarding M0 复现
+主要输出为 `artifacts/p0-demo/p0-demo-summary-v1.json`，并回指 profile、report、
+provenance、raw result 和 evidence index。
 
-```powershell
-$env:PYTHONPATH="agent_integration_system/src;auto_evaluation_system/src"; python -m agent_integration_system.cli validate examples/agents/simple_agent/redsentinel.yaml
-$env:PYTHONPATH="agent_integration_system/src;auto_evaluation_system/src"; python -m agent_integration_system.cli profile examples/agents/simple_agent/redsentinel.yaml --output runs/m0-agent-profile.json
+底层兼容入口：
+
+```bash
+redsentinel profile examples/agents/simple_agent/redsentinel.yaml --dry-run
+redsentinel evaluate --output-dir artifacts --seed 42
 ```
 
-预期摘要：
+`redsentinel` 是 Sentinel-Guardian 保留的兼容 CLI 名称。
+`evolve` 和 `experiment` 属于历史算法验证入口，不再进入比赛主流程。
 
-- `validate`: 输出 `CONFIG_VALID=true`、节点数量和攻击入口。
-- `profile`: 生成符合 `agent-profile-v1` 的 `runs/m0-agent-profile.json`。
+## 自动化验证
 
-## 回归验证
+默认测试：
 
-```powershell
+```bash
 python -m pytest -q
-python -m pytest agent_integration_system/tests auto_evaluation_system/tests/contracts -q
-python -m compileall -q agent_integration_system auto_attack_system auto_defense_system auto_evaluation_system sdk
 ```
 
-当前固定验证结果：`302 collected (300 passed, 1 failed, 1 skipped)`（安装 `.[all]` 全量依赖后）；最小依赖下约 222 passed。
+完整离线测试：
 
-## 运行产物位置
+```bash
+python -m pytest -q -o addopts=''
+```
 
-| 目录 | 来源命令 | 内容 |
-|---|---|---|
-| `runs/` | `python run.py --demo` | 监督闭环 trace/report/audit |
-| `attack-runs/` | `python run.py --comp2 --offline` | 红队攻击历史、反思日志、覆盖表 |
-| `defense-runs/` | `python run.py --comp3 --offline` | 加固决策、回归报告 |
-| `evidence-runs/` | `python run.py --comp4 --offline` | 收敛曲线、雷达图、消融和数据卡 |
-| `runs/m0-agent-profile.json` | `agent_integration_system.cli profile ...` | 外部 Agent 标准画像 |
+静态检查：
 
-提交包中的固定证据副本位于 [`evidence-pack/`](./evidence-pack/)。
+```bash
+python -m ruff check . --select F401,F841,F821,F811
+```
+
+## 真实 OpenManus 证据
+
+真实运行必须满足：
+
+- `real_runtime=true`
+- `simulated=false`
+- baseline/guarded 使用相同模型、case、seed 和预算
+- 环境失败、模型拒答和 Guard 拦截分别归因
+- manifest、provenance、raw trajectory 和 evidence index 完整
+- stdout、stderr、events 和 provenance 通过 secret scan
+
+当前 W2 rerun10 已通过上述门禁。复现所需镜像、模型元数据、运行结果与限制见
+[`../research/stages/p1-execution-log.md`](../research/stages/p1-execution-log.md)。
+外部模型凭据不得写入命令、配置、日志或文档。
+
+## 历史固定证据包
+
+[`evidence-pack/`](./evidence-pack/) 保存旧竞赛阶段生成的确定性离线副本。其
+`python run.py --comp*` 命令属于已删除的历史入口，仅用于解释固定产物来源，不是
+当前复现命令。离线结果不得替代真实 Agent 效果。
+
+## 结果边界
+
+- 历史 `43.75% -> 0%` 是 `offline_fixture` 算法 smoke。
+- W2 rerun10 是单 Agent、单模型、单 seed 真实门禁。
+- OpenManus 缺少等价邮件工具，适用覆盖为 5/6。
+- 本仓库不再推进跨 Agent、跨模型或正式统计实验路线。

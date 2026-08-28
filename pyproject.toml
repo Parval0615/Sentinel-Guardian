@@ -1,7 +1,7 @@
 [project]
 name = "redsentinel"
 version = "0.1.0"
-description = "Trajectory-level Agent security evaluation and co-evolution research framework"
+description = "Autonomous pre-deployment security audit and hardening agent for enterprise AI agents"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
@@ -17,6 +17,7 @@ redsentinel = "redsentinel.cli:main"
 redsentinel-agent = "redsentinel.apps.evaluation_cli:main"
 redsentinel-defense = "redsentinel.apps.defense_cli:main"
 redsentinel-openmanus = "redsentinel.apps.openmanus_cli:openmanus_cli_boundary"
+redsentinel-competition-matrix = "redsentinel.apps.competition_matrix_cli:cli_boundary"
 
 [project.optional-dependencies]
 evaluation = [

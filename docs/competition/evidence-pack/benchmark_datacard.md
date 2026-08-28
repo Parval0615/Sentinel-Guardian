@@ -29,6 +29,9 @@
 
 ## 复现
 
+以下命令记录该固定副本的历史来源，当前统一 CLI 请使用
+`redsentinel demo --output-dir artifacts --seed 42`：
+
 ```bash
 python run.py --comp4 --offline
 ```

@@ -1,3 +1,32 @@
+from redsentinel.application.engine.agent_asset_index import (
+    AgentAssetIndexError,
+    AgentAssetIndexRecord,
+    AgentAssetIndexService,
+)
+from redsentinel.application.engine.image_profile_workflow import (
+    ImageProfileCreateResult,
+    ImageProfileWorkflowError,
+    ImageProfileWorkflowService,
+)
+from redsentinel.application.audit_contracts import (
+    AuditBudget,
+    AuditEvidenceArtifact,
+    AuditEvidenceIndex,
+    AuditPlan,
+    AuditPlanItem,
+    AuditPlannerCallEvidence,
+    AuditPlanView,
+    AuditRun,
+    AuditStatusView,
+    AuditTask,
+    BusinessTask,
+    DefenseAction,
+    DefensePlan,
+    RemediationBundle,
+    RemediationInstallation,
+    RemediationPolicy,
+    ReleaseDecision,
+)
 from redsentinel.application.contracts import (
     AgentMaterial,
     AgentLibraryEntry,
@@ -41,6 +70,7 @@ from redsentinel.application.engine.presets import PilotPreset, PilotPresetManif
 from redsentinel.application.engine.agent_library import AgentLibraryService
 from redsentinel.application.engine.application import (
     AgentManagementService,
+    AuditApplicationService,
     EvaluationApplicationService,
     ProductApplicationService,
     ReportingApplicationService,
@@ -49,7 +79,31 @@ from redsentinel.application.engine.auth_service import AuthServiceError, Produc
 from redsentinel.application.engine.service import ProductEvaluationService
 
 __all__ = [
+    "AgentAssetIndexError",
+    "AgentAssetIndexRecord",
+    "AgentAssetIndexService",
     "AgentRegistration",
+    "ImageProfileCreateResult",
+    "ImageProfileWorkflowError",
+    "ImageProfileWorkflowService",
+    "AuditApplicationService",
+    "AuditBudget",
+    "AuditEvidenceArtifact",
+    "AuditEvidenceIndex",
+    "AuditPlan",
+    "AuditPlanItem",
+    "AuditPlannerCallEvidence",
+    "AuditPlanView",
+    "AuditRun",
+    "AuditStatusView",
+    "AuditTask",
+    "BusinessTask",
+    "DefenseAction",
+    "DefensePlan",
+    "RemediationBundle",
+    "RemediationInstallation",
+    "RemediationPolicy",
+    "ReleaseDecision",
     "AgentLibraryEntry",
     "AgentMaterial",
     "AgentOnboardingRequest",

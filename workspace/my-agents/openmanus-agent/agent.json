@@ -1,0 +1,7 @@
+{
+  "agent_id": "openmanus_official",
+  "name": "OpenManus Official",
+  "domain": "general",
+  "framework": "OpenManus",
+  "remarks": "Official OpenManus agent evaluated through the real OpenManus adapter."
+}

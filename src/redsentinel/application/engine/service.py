@@ -17,6 +17,7 @@ from redsentinel.application.engine.attack_pack import (
     load_ecommerce_attack_pack,
     load_openmanus_attack_pack,
 )
+from redsentinel.core.docker_runtime import resolve_docker_binary
 from redsentinel.reporting.engine.comparison import (  # noqa: F401 - domain service compatibility exports
     build_retest_comparison,
     write_comparison_artifacts,
@@ -110,6 +111,13 @@ class EvaluationRequestError(ValueError):
 
 class ProductEvaluationService:
     def __init__(self, storage_root: str | Path = "runs/product") -> None:
+        from redsentinel.application.engine.domain_services import (
+            AgentManagementService,
+            EvaluationLifecycleService,
+            ReportQueryService,
+            SupervisionBridgeService,
+        )
+
         self.storage = ProductStorage(storage_root)
         self.storage_root = self.storage.root
         self._registrations: dict[tuple[str, str], AgentRegistration] = {}
@@ -129,6 +137,9 @@ class ProductEvaluationService:
 
     def get_agent(self, agent_id: str, tenant_id: str = "private_tenant") -> AgentRegistration:
         return self.agents.get_agent(agent_id, tenant_id)
+
+    def unregister_agent(self, agent_id: str, tenant_id: str = "private_tenant") -> None:
+        self.agents.unregister_agent(agent_id, tenant_id)
 
     def get_agent_profile(self, agent_id: str, tenant_id: str = "private_tenant") -> AgentProfile:
         return self.agents.get_agent_profile(agent_id, tenant_id)
@@ -515,8 +526,22 @@ class ProductEvaluationService:
         runtime_error_scenarios: list[str] = []
         real_tool_execution_count = 0
         blocked_tool_execution_count = 0
+        remediation_policy = request.policy.get("remediation")
+        if remediation_policy is not None and not isinstance(remediation_policy, dict):
+            raise ValueError("Evaluation remediation policy must be an object.")
+        scenario_targets = request.policy.get("scenario_targets", {})
+        if not isinstance(scenario_targets, dict) or any(
+            not isinstance(key, str) or not isinstance(value, str)
+            for key, value in scenario_targets.items()
+        ):
+            raise ValueError("Evaluation scenario_targets policy must map scenario ids to node ids.")
+        defense_mode = "guarded" if request.defense_enabled else "baseline"
 
         for scenario in selected:
+            target_node = scenario_targets.get(
+                scenario.scenario_id,
+                scenario.category,
+            )
             baseline = None
             if is_openmanus_real:
                 baseline = self._run_steps(
@@ -556,8 +581,9 @@ class ProductEvaluationService:
                 scenario.clean_steps,
                 scenario_id=scenario.scenario_id,
                 case_type="clean",
-                defense_mode="guarded",
+                defense_mode=defense_mode,
                 agent_id=registration.agent_id,
+                remediation_policy=remediation_policy,
             )
             controlled = self._run_steps(
                 adapter,
@@ -565,8 +591,9 @@ class ProductEvaluationService:
                 scenario.controlled_steps,
                 scenario_id=scenario.scenario_id,
                 case_type="controlled",
-                defense_mode="guarded",
+                defense_mode=defense_mode,
                 agent_id=registration.agent_id,
+                remediation_policy=remediation_policy,
             )
             clean_runtime_error = _run_has_runtime_error(clean)
             controlled_runtime_error = _run_has_runtime_error(controlled)
@@ -651,7 +678,7 @@ class ProductEvaluationService:
             scenario_result = ScenarioResult(
                 scenario_id=scenario.scenario_id,
                 category=scenario.category,
-                target_node=scenario.category,
+                target_node=target_node,
                 severity=scenario.severity,
                 expected_decision=scenario.expected_decision,
                 actual_decision=actual_decision,
@@ -659,10 +686,10 @@ class ProductEvaluationService:
                 passed=passed,
                 business_impact=scenario.business_impact,
                 trajectory_ref=str(trajectory_path),
-                blocked_node=scenario.category if actual_decision == "block" and not controlled_runtime_error else None,
-                bypassed_nodes=[scenario.category] if attack_succeeded else [],
+                blocked_node=target_node if actual_decision == "block" and not controlled_runtime_error else None,
+                bypassed_nodes=[target_node] if attack_succeeded else [],
                 node_status={
-                    scenario.category: "runtime_error"
+                    target_node: "runtime_error"
                     if scenario_runtime_error
                     else ("bypassed" if attack_succeeded else "intercepted"),
                 },
@@ -677,10 +704,10 @@ class ProductEvaluationService:
                     evaluation_id=evaluation_id,
                     case_id=f"{scenario.scenario_id}-clean",
                     case_type="clean",
-                    target_node=scenario.category,
+                    target_node=target_node,
                     expected_decision="allow",
                     actual_decision=clean_decision,
-                    blocked_node=scenario.category if clean_decision == "block" else None,
+                    blocked_node=target_node if clean_decision == "block" else None,
                     trajectory_ref=str(trajectory_path),
                 ).model_dump(mode="json"),
             )
@@ -693,11 +720,11 @@ class ProductEvaluationService:
                     evaluation_id=evaluation_id,
                     case_id=f"{scenario.scenario_id}-attack",
                     case_type="attack",
-                    target_node=scenario.category,
+                    target_node=target_node,
                     expected_decision=scenario.expected_decision,
                     actual_decision=actual_decision,
-                    blocked_node=scenario.category if actual_decision == "block" and not controlled_runtime_error else None,
-                    bypassed_nodes=[scenario.category] if attack_succeeded else [],
+                    blocked_node=target_node if actual_decision == "block" and not controlled_runtime_error else None,
+                    bypassed_nodes=[target_node] if attack_succeeded else [],
                     trajectory_ref=str(trajectory_path),
                 ).model_dump(mode="json"),
             )
@@ -731,8 +758,18 @@ class ProductEvaluationService:
             bypassed_critical_node_count=critical_attack_bypass_count,
             critical_node_test_count=critical_node_test_count,
             critical_attack_bypass_count=critical_attack_bypass_count,
-            tested_node_count=len({item.category for item in selected}),
-            total_required_node_count=integrity["required_node_count"] or len({item.category for item in selected}),
+            tested_node_count=len(
+                {
+                    item.target_node or item.category
+                    for item in scenario_results
+                }
+            ),
+            total_required_node_count=integrity["required_node_count"] or len(
+                {
+                    item.target_node or item.category
+                    for item in scenario_results
+                }
+            ),
             failed_attack_severity_weights=failed_attack_severity_weights,
         )
         deterministic_metrics = compute_deterministic_metrics(metric_inputs)
@@ -927,6 +964,7 @@ class ProductEvaluationService:
         case_type: str | None = None,
         defense_mode: str | None = None,
         agent_id: str | None = None,
+        remediation_policy: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         adapter.reset_session(session_id)
         context: dict[str, str] = {}
@@ -944,6 +982,15 @@ class ProductEvaluationService:
                     "case_type": case_type or "",
                     "defense_mode": defense_mode or "guarded",
                     "agent_id": agent_id or "",
+                    "remediation_bundle_id": str(
+                        (remediation_policy or {}).get("bundle_id") or ""
+                    ),
+                    "remediation_policy_sha256": str(
+                        (remediation_policy or {}).get("policy_sha256") or ""
+                    ),
+                    "active_guards": list(
+                        (remediation_policy or {}).get("active_guards") or []
+                    ),
                 },
             )
             payload = result.to_dict()
@@ -955,7 +1002,12 @@ class ProductEvaluationService:
                 order_id = _extract_order_id(result.answer)
                 if order_id:
                     context["last_order_id"] = order_id
-        return {"session_id": session_id, "turns": turns, "trajectory": adapter.export_trajectory()}
+        return {
+            "session_id": session_id,
+            "turns": turns,
+            "trajectory": adapter.export_trajectory(),
+            "remediation": remediation_policy,
+        }
 
     def _bridge_runtime_events_to_supervision(self, evaluation_id: str, *, tenant_id: str, agent_id: str) -> int:
         return self.supervision._bridge_runtime_events_to_supervision(evaluation_id, tenant_id=tenant_id, agent_id=agent_id)
@@ -1380,6 +1432,7 @@ def _openmanus_real_adapter_for(registration: AgentRegistration, *, output_root:
     runner = OpenManusDockerRunner(
         OpenManusDockerRunnerConfig(
             image=image,
+            docker_binary=resolve_docker_binary(),
             output_root=output_root,
             timeout_seconds=timeout_seconds,
             max_steps=max_steps,
@@ -2099,11 +2152,3 @@ def _turn_outputs_are_pii_safe(turns: list[dict[str, Any]]) -> bool:
 def _extract_order_id(text: str) -> str | None:
     match = re.search(r"\b(o\d+)\b", text)
     return match.group(1) if match else None
-
-# Imported after helper definitions to avoid a partially initialized circular module.
-from redsentinel.application.engine.domain_services import (  # noqa: E402
-    AgentManagementService,
-    EvaluationLifecycleService,
-    ReportQueryService,
-    SupervisionBridgeService,
-)

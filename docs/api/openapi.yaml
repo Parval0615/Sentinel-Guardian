@@ -2,13 +2,32 @@ openapi: 3.1.0
 info:
   title: Agent Security Product API
   version: 0.1.0
-  description: Private single-tenant API for agent security evaluation.
+  description: Image-backed Agent profiling, source onboarding compatibility, and Sentinel-managed sandbox audit API.
 servers:
   - url: http://localhost:8000
 paths:
+  /v1/agents/onboard:
+    post:
+      summary: Onboard Agent source for sandbox audit
+      operationId: onboardAgentSource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentOnboardingRequest"
+      responses:
+        "200":
+          description: Verified source material and sandbox build plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentOnboardingResponse"
   /v1/agents:
     post:
-      summary: Register an enterprise agent
+      summary: Register a platform-managed compatibility Agent
+      description: Deprecated compatibility registration. Desktop image assets are discovered from RED_SENTINEL_AGENT_ROOT; source-only integrations use /v1/agents/onboard.
+      deprecated: true
       operationId: registerAgent
       requestBody:
         required: true
@@ -23,6 +42,113 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AgentRegistration"
+  /v1/agents/index-errors:
+    get:
+      summary: List isolated Agent directory indexing errors
+      operationId: listAgentIndexErrors
+      responses:
+        "200":
+          description: Index errors for invalid directories; valid Agents remain available
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /v1/agents/{agent_id}/profile:
+    get:
+      summary: Get the latest image profile, with legacy source profile fallback
+      operationId: getAgentProfile
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+      responses:
+        "200":
+          description: Published Agent profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageAgentProfile"
+  /v1/agents/{agent_id}/profiles:
+    post:
+      summary: Queue or reuse an image-digest-bound profile analysis
+      description: Static stages require neither Docker nor AI. Missing semantic or dynamic facilities may produce a partial published profile.
+      operationId: createImageProfile
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+      responses:
+        "202":
+          description: Queued, running, cached, or completed profile analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageProfileCreation"
+  /v1/agents/{agent_id}/profiles/latest:
+    get:
+      summary: Get the latest published agent-profile-v0.2
+      operationId: getLatestImageProfile
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+      responses:
+        "200":
+          description: Evidence-bound image profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageAgentProfile"
+  /v1/agents/{agent_id}/profiles/{profile_id}:
+    get:
+      summary: Get an immutable image profile version
+      operationId: getImageProfile
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+        - name: profile_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Evidence-bound image profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageAgentProfile"
+  /v1/agents/{agent_id}/profiles/{analysis_id}/status:
+    get:
+      summary: Get eight-stage image profile status
+      operationId: getImageProfileStatus
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+        - name: analysis_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stage status, timestamps, checkpoints, and errors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageAnalysisStatus"
+  /v1/agents/{agent_id}/profiles/{analysis_id}/retry:
+    post:
+      summary: Retry an image profile from its first failed stage
+      operationId: retryImageProfile
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+        - name: analysis_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Reset analysis status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageAnalysisStatus"
   /v1/agents/{agent_id}/sessions:
     post:
       summary: Create an evaluation session
@@ -45,7 +171,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/ImageProfileCreation"
                 required: [session_id, tenant_id, agent_id]
                 properties:
                   session_id:
@@ -153,15 +279,1311 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/ImageProfileCreation"
                 required: [trajectory_id, path]
                 properties:
                   trajectory_id:
                     type: string
                   path:
                     type: string
+  /v1/audits:
+    get:
+      summary: List audits for the authenticated tenant
+      operationId: listAudits
+      responses:
+        "200":
+          description: Tenant audit list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditRun"
+    post:
+      summary: Create and optionally execute an autonomous security audit
+      operationId: createAudit
+      parameters:
+        - name: background
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: prepare_only
+          in: query
+          required: false
+          description: Build the attack plan and stop for explicit user review.
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuditTask"
+      responses:
+        "200":
+          description: Persisted audit run
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditRun"
+  /v1/audits/{audit_id}:
+    get:
+      summary: Get an audit run
+      operationId: getAudit
+      parameters:
+        - $ref: "#/components/parameters/AuditId"
+      responses:
+        "200":
+          description: Persisted audit run
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditRun"
+  /v1/audits/{audit_id}/plan:
+    get:
+      summary: Get the validated audit plan
+      operationId: getAuditPlan
+      parameters:
+        - $ref: "#/components/parameters/AuditId"
+      responses:
+        "200":
+          description: Audit plan view
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditPlanView"
+  /v1/audits/{audit_id}/execute:
+    post:
+      summary: Approve a reviewed attack plan and start formal execution
+      operationId: executeAudit
+      parameters:
+        - $ref: "#/components/parameters/AuditId"
+        - name: background
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: true
+      responses:
+        "200":
+          description: Audit accepted for execution
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditRun"
+  /v1/audits/{audit_id}/status:
+    get:
+      summary: Get audit stage progress
+      operationId: getAuditStatus
+      parameters:
+        - $ref: "#/components/parameters/AuditId"
+      responses:
+        "200":
+          description: Audit status view
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditStatusView"
+  /v1/audits/{audit_id}/evidence:
+    get:
+      summary: Get the refreshed audit evidence index
+      operationId: getAuditEvidence
+      parameters:
+        - $ref: "#/components/parameters/AuditId"
+      responses:
+        "200":
+          description: Evidence availability and hashes
+          content:
+            application/json:
+              schema:
+                type: object
+  /v1/audits/{audit_id}/decision:
+    get:
+      summary: Get the four-state release decision
+      operationId: getAuditDecision
+      parameters:
+        - $ref: "#/components/parameters/AuditId"
+      responses:
+        "200":
+          description: Release decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReleaseDecision"
+  /v1/audits/{audit_id}/workspace:
+    get:
+      summary: Get the C5 audit workspace aggregate
+      operationId: getAuditWorkspace
+      parameters:
+        - $ref: "#/components/parameters/AuditId"
+      responses:
+        "200":
+          description: Audit workspace aggregate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditWorkspaceView"
+  /v1/audits/{audit_id}/resume:
+    post:
+      summary: Resume a non-terminal audit
+      operationId: resumeAudit
+      parameters:
+        - $ref: "#/components/parameters/AuditId"
+        - name: background
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Updated audit run
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditRun"
+  /v1/audits/{audit_id}/next-round:
+    post:
+      summary: Generate a feedback-driven attack set and start the next audit round
+      operationId: createNextAuditRound
+      parameters:
+        - $ref: "#/components/parameters/AuditId"
+        - name: background
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: prepare_only
+          in: query
+          required: false
+          description: Generate the feedback-driven plan and stop for review.
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Newly created audit round
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditRun"
+  /v1/runtime/openmanus/status:
+    get:
+      summary: Check whether the current App process can run OpenManus
+      operationId: getOpenManusRuntimeStatus
+      responses:
+        "200":
+          description: Runtime configuration status without secrets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenManusRuntimeStatus"
+  /v1/runtime/openmanus/config:
+    post:
+      summary: Configure ephemeral OpenManus model credentials
+      operationId: configureOpenManusRuntime
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenManusRuntimeConfiguration"
+      responses:
+        "200":
+          description: Runtime configuration status without secrets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenManusRuntimeStatus"
+  /v1/runtime/models/status:
+    get:
+      summary: List redacted model configuration and test status by Agent role
+      operationId: getModelRuntimeStatuses
+      responses:
+        "200":
+          description: Model runtime status for target, attack, and defense Agents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ModelRuntimeStatus"
+  /v1/runtime/audit-preflight/{agent_id}:
+    get:
+      summary: Check whether an Agent can start formal audit execution
+      operationId: getAuditPreflight
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+      responses:
+        "200":
+          description: Tenant-scoped runtime readiness and blocking checks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditPreflightStatus"
+  /v1/runtime/models/{role}/test:
+    post:
+      summary: Test and retain an ephemeral model configuration for one Agent role
+      operationId: testModelRuntimeConfiguration
+      parameters:
+        - name: role
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [target, attack, defense]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModelRuntimeConfiguration"
+      responses:
+        "200":
+          description: Redacted test result; credentials are never returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelRuntimeStatus"
 components:
+  parameters:
+    AgentId:
+      name: agent_id
+      in: path
+      required: true
+      schema:
+        type: string
+    AuditId:
+      name: audit_id
+      in: path
+      required: true
+      schema:
+        type: string
   schemas:
+    ProfileClaim:
+      type: object
+      required: [evidence_refs, confidence, verification_status]
+      properties:
+        evidence_refs:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        verification_status:
+          type: string
+          enum: [verified, supported, inferred, rejected]
+    ProfileAnalysisStage:
+      type: object
+      required: [stage, status]
+      properties:
+        stage:
+          type: string
+          enum: [inventory, unpack, static_extract, framework_detect, graph_reconstruct, semantic_enrich, dynamic_verify, finalize]
+        status:
+          type: string
+          enum: [pending, running, completed, failed, skipped]
+        started_at:
+          type: [string, "null"]
+        completed_at:
+          type: [string, "null"]
+        checkpoint_ref:
+          type: [string, "null"]
+    ProfileAnalysisError:
+      type: object
+      required: [error_id, stage, code, message, retryable, details]
+      properties:
+        error_id:
+          type: string
+        stage:
+          type: string
+          enum: [inventory, unpack, static_extract, framework_detect, graph_reconstruct, semantic_enrich, dynamic_verify, finalize]
+        code:
+          type: string
+        message:
+          type: string
+        retryable:
+          type: boolean
+        details:
+          type: object
+          additionalProperties:
+            type: [string, number, integer, boolean, "null"]
+    ImageAnalysisStatus:
+      type: object
+      required: [schema_version, analysis_id, agent_id, image_digest, status, stages, errors]
+      properties:
+        schema_version:
+          type: string
+          const: image-analysis-status-v0.1
+        analysis_id:
+          type: string
+        agent_id:
+          type: string
+        image_digest:
+          type: string
+          pattern: "^sha256:[0-9a-f]{64}$"
+        configuration_digest:
+          type: string
+          pattern: "^sha256:[0-9a-f]{64}$"
+          description: Stable digest of profile-affecting Agent descriptor settings.
+        status:
+          type: string
+          enum: [queued, running, completed, partial, failed]
+        stages:
+          type: array
+          description: Ordered inventory, unpack, static_extract, framework_detect, graph_reconstruct, semantic_enrich, dynamic_verify, and finalize states.
+          items:
+            $ref: "#/components/schemas/ProfileAnalysisStage"
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileAnalysisError"
+    ImageProfileCreation:
+      type: object
+      required: [schema_version, analysis, cached]
+      properties:
+        schema_version:
+          type: string
+          const: image-profile-create-response-v0.1
+        analysis:
+          $ref: "#/components/schemas/ImageAnalysisStatus"
+        cached:
+          type: boolean
+    ImageIdentity:
+      allOf:
+        - $ref: "#/components/schemas/ProfileClaim"
+        - type: object
+          required: [digest, os, architecture, entrypoint, command, working_directory, environment_variables, layer_digests]
+          properties:
+            digest:
+              type: string
+              pattern: "^sha256:[0-9a-f]{64}$"
+            os:
+              type: string
+            architecture:
+              type: string
+            variant:
+              type: [string, "null"]
+            created_at:
+              type: [string, "null"]
+            entrypoint:
+              type: array
+              items:
+                type: string
+            command:
+              type: array
+              items:
+                type: string
+            working_directory:
+              type: string
+            environment_variables:
+              type: array
+              items:
+                type: string
+            layer_digests:
+              type: array
+              items:
+                type: string
+                pattern: "^sha256:[0-9a-f]{64}$"
+    ProfileFramework:
+      allOf:
+        - $ref: "#/components/schemas/ProfileClaim"
+        - type: object
+          required: [framework_id, name]
+          properties:
+            framework_id:
+              type: string
+            name:
+              type: string
+            version:
+              type: [string, "null"]
+    ImageProfileNode:
+      allOf:
+        - $ref: "#/components/schemas/ProfileClaim"
+        - type: object
+          required: [node_id, node_type, name, framework_ids, capability_ids, permission_ids, control_ids, risk_level]
+          properties:
+            node_id:
+              type: string
+            node_type:
+              type: string
+              enum: [external_input, entrypoint, agent, sub_agent, llm, prompt, router, tool, rag, knowledge_base, memory, mcp, external_api, shell, file, browser, database, approval, guard]
+            name:
+              type: string
+            framework_ids:
+              type: array
+              items:
+                type: string
+            capability_ids:
+              type: array
+              items:
+                type: string
+            permission_ids:
+              type: array
+              items:
+                type: string
+            control_ids:
+              type: array
+              items:
+                type: string
+            risk_level:
+              type: string
+              enum: [low, medium, high, critical]
+    ImageProfileEdge:
+      allOf:
+        - $ref: "#/components/schemas/ProfileClaim"
+        - type: object
+          required: [edge_id, edge_type, source_node_id, target_node_id]
+          properties:
+            edge_id:
+              type: string
+            edge_type:
+              type: string
+              enum: [calls, routes_to, reads, writes, retrieves, invokes, controls, sends_to]
+            source_node_id:
+              type: string
+            target_node_id:
+              type: string
+            condition:
+              type: [string, "null"]
+    ProfileCapability:
+      allOf:
+        - $ref: "#/components/schemas/ProfileClaim"
+        - type: object
+          required: [capability_id, name, operation, node_ids, risk_level]
+          properties:
+            capability_id:
+              type: string
+            name:
+              type: string
+            operation:
+              type: string
+            node_ids:
+              type: array
+              minItems: 1
+              items:
+                type: string
+            risk_level:
+              type: string
+              enum: [low, medium, high, critical]
+    ProfilePermission:
+      allOf:
+        - $ref: "#/components/schemas/ProfileClaim"
+        - type: object
+          required: [permission_id, permission_type, operations, scope, node_ids, capability_ids, risk_level]
+          properties:
+            permission_id:
+              type: string
+            permission_type:
+              type: string
+              enum: [network, file, database, shell, browser, external_api, credential]
+            operations:
+              type: array
+              minItems: 1
+              items:
+                type: string
+            scope:
+              type: string
+            node_ids:
+              type: array
+              minItems: 1
+              items:
+                type: string
+            capability_ids:
+              type: array
+              items:
+                type: string
+            risk_level:
+              type: string
+              enum: [low, medium, high, critical]
+    ProfileControl:
+      allOf:
+        - $ref: "#/components/schemas/ProfileClaim"
+        - type: object
+          required: [control_id, control_type, name, node_ids, description]
+          properties:
+            control_id:
+              type: string
+            control_type:
+              type: string
+              enum: [parameter_validation, allowlist, authorization, human_approval, input_guard, output_guard]
+            name:
+              type: string
+            node_ids:
+              type: array
+              minItems: 1
+              items:
+                type: string
+            description:
+              type: string
+    EvidenceLocator:
+      type: object
+      properties:
+        image_path:
+          type: [string, "null"]
+        python_module:
+          type: [string, "null"]
+        symbol:
+          type: [string, "null"]
+        line_start:
+          type: [integer, "null"]
+          minimum: 1
+        line_end:
+          type: [integer, "null"]
+          minimum: 1
+        package_metadata_key:
+          type: [string, "null"]
+        config_key:
+          type: [string, "null"]
+        event_id:
+          type: [string, "null"]
+    ProfileEvidenceItem:
+      type: object
+      required: [evidence_id, artifact_digest, locator, extractor, method, trust_level, content_sha256]
+      properties:
+        evidence_id:
+          type: string
+        artifact_digest:
+          type: string
+          pattern: "^sha256:[0-9a-f]{64}$"
+        layer_digest:
+          type: [string, "null"]
+          pattern: "^sha256:[0-9a-f]{64}$"
+        locator:
+          $ref: "#/components/schemas/EvidenceLocator"
+        extractor:
+          type: string
+        method:
+          type: string
+          enum: [image_config, package_metadata, static, framework, semantic, dynamic]
+        trust_level:
+          type: string
+          enum: [static, attested, observed]
+          description: Static extraction, image-provided attestation, or Sentinel-observed evidence.
+        content_sha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+        summary:
+          type: [string, "null"]
+    ProfileRiskPath:
+      allOf:
+        - $ref: "#/components/schemas/ProfileClaim"
+        - type: object
+          required: [path_id, source_node_id, sink_node_id, node_ids, edge_ids, capability_ids, permission_ids, control_ids, applicable_threats, control_gaps, risk_level]
+          properties:
+            path_id:
+              type: string
+            source_node_id:
+              type: string
+            sink_node_id:
+              type: string
+            node_ids:
+              type: array
+              minItems: 2
+              items:
+                type: string
+            edge_ids:
+              type: array
+              minItems: 1
+              items:
+                type: string
+            capability_ids:
+              type: array
+              items:
+                type: string
+            permission_ids:
+              type: array
+              items:
+                type: string
+            control_ids:
+              type: array
+              items:
+                type: string
+            applicable_threats:
+              type: array
+              minItems: 1
+              items:
+                type: string
+            control_gaps:
+              type: array
+              items:
+                type: string
+            risk_level:
+              type: string
+              enum: [low, medium, high, critical]
+    AnalysisLimitation:
+      type: object
+      required: [code, message, evidence_refs]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        evidence_refs:
+          type: array
+          items:
+            type: string
+    CoverageStatistic:
+      type: object
+      required: [covered, total, ratio]
+      properties:
+        covered:
+          type: integer
+          minimum: 0
+        total:
+          type: integer
+          minimum: 0
+        ratio:
+          type: number
+          minimum: 0
+          maximum: 1
+    ProfileCompleteness:
+      type: object
+      required:
+        - static_source_recovery
+        - framework_coverage
+        - graph_evidence_coverage
+        - dynamic_corroboration_coverage
+        - dynamic_behavior_coverage
+        - unresolved_limitations
+        - blocking_limitations
+        - conclusion
+      properties:
+        static_source_recovery:
+          type: string
+          description: Recovery state for Python source code in the image.
+          enum: [complete, partial, metadata_only, bytecode_only, none]
+        framework_coverage:
+          $ref: "#/components/schemas/CoverageStatistic"
+        graph_evidence_coverage:
+          $ref: "#/components/schemas/CoverageStatistic"
+        dynamic_corroboration_coverage:
+          $ref: "#/components/schemas/CoverageStatistic"
+        dynamic_behavior_coverage:
+          $ref: "#/components/schemas/CoverageStatistic"
+        unresolved_limitations:
+          type: integer
+          minimum: 0
+        blocking_limitations:
+          type: array
+          items:
+            type: string
+        conclusion:
+          type: string
+          enum: [complete, partial]
+    ImageAgentProfile:
+      type: object
+      required: [schema_version, profile_id, tenant_id, agent_id, generated_at, image, analysis, frameworks, nodes, edges, capabilities, permissions, controls, evidence, risk_paths, limitations]
+      properties:
+        schema_version:
+          type: string
+          const: agent-profile-v0.2
+        profile_id:
+          type: string
+        tenant_id:
+          type: string
+        agent_id:
+          type: string
+        generated_at:
+          type: string
+        image:
+          $ref: "#/components/schemas/ImageIdentity"
+        analysis:
+          $ref: "#/components/schemas/ImageAnalysisStatus"
+        frameworks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileFramework"
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImageProfileNode"
+        edges:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImageProfileEdge"
+        capabilities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileCapability"
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfilePermission"
+        controls:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileControl"
+        evidence:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ProfileEvidenceItem"
+        risk_paths:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileRiskPath"
+        limitations:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalysisLimitation"
+        completeness:
+          oneOf:
+            - $ref: "#/components/schemas/ProfileCompleteness"
+            - type: "null"
+          description: Machine-readable completeness gates; absent only on legacy v0.2 profiles.
+    AuditTask:
+      type: object
+      required: [agent_id, normal_tasks, security_goals, authorized_risk_surfaces]
+      properties:
+        audit_id:
+          type: string
+        parent_audit_id:
+          type: [string, "null"]
+        round_index:
+          type: integer
+          minimum: 1
+        agent_id:
+          type: string
+        image_digest:
+          type: [string, "null"]
+          pattern: "^sha256:[0-9a-f]{64}$"
+          description: Required with profile_id and profile_sha256 for image-backed audits.
+        profile_id:
+          type: [string, "null"]
+          description: Immutable agent-profile-v0.2 identifier; required with both digest fields.
+        profile_sha256:
+          type: [string, "null"]
+          pattern: "^[0-9a-f]{64}$"
+          description: Canonical profile hash; required with image_digest and profile_id.
+        normal_tasks:
+          type: array
+          minItems: 1
+          items:
+            type: object
+        security_goals:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        authorized_risk_surfaces:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        allowed_scenarios:
+          type: array
+          items:
+            type: string
+        runtime_mode:
+          type: string
+          enum: [sdk, openmanus_real]
+        benchmark_id:
+          type: string
+        benchmark_version:
+          type: [string, "null"]
+        budget:
+          type: object
+    OpenManusRuntimeConfiguration:
+      type: object
+      required: [api_key, base_url, model]
+      properties:
+        api_key:
+          type: string
+          format: password
+          minLength: 1
+        base_url:
+          type: string
+          format: uri
+        model:
+          type: string
+          minLength: 1
+    OpenManusRuntimeStatus:
+      type: object
+      required: [configured]
+      properties:
+        configured:
+          type: boolean
+        base_url:
+          type: [string, "null"]
+        model:
+          type: [string, "null"]
+    ModelRuntimeConfiguration:
+      type: object
+      required: [api_key, base_url, model]
+      additionalProperties: false
+      properties:
+        api_key:
+          type: string
+          format: password
+          minLength: 1
+        base_url:
+          type: string
+          format: uri
+        model:
+          type: string
+          minLength: 1
+    ModelRuntimeStatus:
+      type: object
+      required: [role, configured, tested]
+      additionalProperties: false
+      properties:
+        role:
+          type: string
+          enum: [target, attack, defense]
+        configured:
+          type: boolean
+        tested:
+          type: boolean
+        base_url:
+          type: [string, "null"]
+        model:
+          type: [string, "null"]
+        tested_at:
+          type: [string, "null"]
+          format: date-time
+        error:
+          type: [string, "null"]
+    AuditPreflightCheck:
+      type: object
+      required: [check_id, status, message]
+      additionalProperties: false
+      properties:
+        check_id:
+          type: string
+        status:
+          type: string
+          enum: [ready, blocked, not_required]
+        message:
+          type: string
+        detail:
+          type: [string, "null"]
+    AuditPreflightStatus:
+      type: object
+      required: [agent_id, adapter_type, ready, checked_at, checks]
+      additionalProperties: false
+      properties:
+        agent_id:
+          type: string
+        adapter_type:
+          type: string
+        ready:
+          type: boolean
+        checked_at:
+          type: string
+          format: date-time
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditPreflightCheck"
+    AuditPlanItem:
+      type: object
+      required:
+        - scenario_id
+        - risk_surface
+        - target_node
+        - rationale
+        - priority
+        - expected_evidence
+        - metadata
+      properties:
+        scenario_id:
+          type: string
+        risk_surface:
+          type: string
+        target_node:
+          type: string
+        rationale:
+          type: string
+        priority:
+          type: integer
+          minimum: 1
+        expected_evidence:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+    AuditPlan:
+      type: object
+      required:
+        - plan_id
+        - audit_id
+        - profile_id
+        - source
+        - items
+        - normal_task_ids
+        - stop_conditions
+        - warnings
+        - generated_at
+      properties:
+        plan_id:
+          type: string
+        audit_id:
+          type: string
+        profile_id:
+          type: string
+        source:
+          type: string
+          enum: [llm, rule_fallback]
+        planner_model:
+          type: [string, "null"]
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/AuditPlanItem"
+        normal_task_ids:
+          type: array
+          items:
+            type: string
+        stop_conditions:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+        generated_at:
+          type: string
+          format: date-time
+    AuditPlanView:
+      type: object
+      required: [audit_id, state, task, plan]
+      properties:
+        audit_id:
+          type: string
+        state:
+          type: string
+        task:
+          $ref: "#/components/schemas/AuditTask"
+        plan:
+          $ref: "#/components/schemas/AuditPlan"
+    AuditStageRecord:
+      type: object
+      required: [event_id, state, status, attempt, started_at]
+      properties:
+        event_id:
+          type: string
+        state:
+          type: string
+        status:
+          type: string
+          enum: [running, completed, failed, skipped]
+        attempt:
+          type: integer
+          minimum: 1
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: [string, "null"]
+          format: date-time
+        duration_ms:
+          type: [integer, "null"]
+          minimum: 0
+        message:
+          type: [string, "null"]
+        evidence_refs:
+          type: array
+          items:
+            type: object
+    AuditStatusView:
+      type: object
+      required:
+        - audit_id
+        - tenant_id
+        - agent_id
+        - state
+        - progress_percent
+        - completed_stage_count
+        - total_stage_count
+        - total_duration_ms
+        - stages
+      properties:
+        audit_id:
+          type: string
+        tenant_id:
+          type: string
+        agent_id:
+          type: string
+        state:
+          type: string
+        progress_percent:
+          type: number
+          minimum: 0
+          maximum: 100
+        completed_stage_count:
+          type: integer
+          minimum: 0
+        total_stage_count:
+          type: integer
+          minimum: 1
+        total_duration_ms:
+          type: integer
+          minimum: 0
+        error:
+          type: [string, "null"]
+        evidence_index_ref:
+          type: [string, "null"]
+        stages:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditStageRecord"
+    AuditRun:
+      type: object
+      required:
+        - audit_id
+        - tenant_id
+        - agent_id
+        - state
+        - task_ref
+        - source_material_ref
+        - source_snapshot_sha256
+      properties:
+        audit_id:
+          type: string
+        parent_audit_id:
+          type: [string, "null"]
+        round_index:
+          type: integer
+          minimum: 1
+        tenant_id:
+          type: string
+        agent_id:
+          type: string
+        state:
+          type: string
+          enum:
+            - created
+            - profiling
+            - planning
+            - attack_review
+            - baseline_execution
+            - defense_generation
+            - guarded_execution
+            - decision
+            - needs_approval
+            - completed
+            - failed
+        task_ref:
+          type: string
+        source_material_ref:
+          type: string
+        source_snapshot_sha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+        image_digest:
+          type: [string, "null"]
+          pattern: "^sha256:[0-9a-f]{64}$"
+          description: Image digest frozen when an image-backed audit is created.
+        profile_id:
+          type: [string, "null"]
+          description: Immutable image profile bound to this audit.
+        profile_sha256:
+          type: [string, "null"]
+          pattern: "^[0-9a-f]{64}$"
+          description: Canonical bound profile hash revalidated on resume.
+        baseline_evaluation_id:
+          type: [string, "null"]
+        guarded_evaluation_id:
+          type: [string, "null"]
+        comparison_id:
+          type: [string, "null"]
+        decision_ref:
+          type: [string, "null"]
+    ReleaseDecision:
+      type: object
+      required: [audit_id, decision, reasons, evidence_complete]
+      properties:
+        audit_id:
+          type: string
+        decision:
+          type: string
+          enum: [allow_release, retest_after_fix, block_release, manual_review]
+        reasons:
+          type: array
+          items:
+            type: string
+        clean_utility_rate:
+          type: [number, "null"]
+        evidence_complete:
+          type: boolean
+    AuditWorkspaceView:
+      type: object
+      required: [audit_id, state, run, task, profile, status, evidence, traces]
+      properties:
+        audit_id:
+          type: string
+        state:
+          type: string
+        run:
+          $ref: "#/components/schemas/AuditRun"
+        task:
+          $ref: "#/components/schemas/AuditTask"
+        profile:
+          type: object
+        plan:
+          oneOf:
+            - $ref: "#/components/schemas/AuditPlan"
+            - type: "null"
+        status:
+          type: object
+        baseline_report:
+          oneOf:
+            - $ref: "#/components/schemas/AgentSecurityReport"
+            - type: "null"
+        guarded_report:
+          oneOf:
+            - $ref: "#/components/schemas/AgentSecurityReport"
+            - type: "null"
+        comparison:
+          oneOf:
+            - $ref: "#/components/schemas/AgentSecurityComparisonReport"
+            - type: "null"
+        decision:
+          oneOf:
+            - $ref: "#/components/schemas/ReleaseDecision"
+            - type: "null"
+        evidence:
+          type: object
+        traces:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditScenarioTrace"
+        round:
+          oneOf:
+            - $ref: "#/components/schemas/AuditRoundView"
+            - type: "null"
+    AuditRoundView:
+      type: object
+      required:
+        - round_index
+        - attack_set_source
+        - benchmark_id
+        - benchmark_version
+        - attack_count
+        - baseline_success_count
+        - guarded_success_count
+        - outcomes
+      properties:
+        round_index:
+          type: integer
+          minimum: 1
+        parent_audit_id:
+          type: [string, "null"]
+        attack_set_source:
+          type: string
+          enum: [static_profile, prior_round_feedback]
+        benchmark_id:
+          type: string
+        benchmark_version:
+          type: string
+        attack_count:
+          type: integer
+          minimum: 0
+        baseline_success_count:
+          type: integer
+          minimum: 0
+        guarded_success_count:
+          type: integer
+          minimum: 0
+        outcomes:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditAttackOutcome"
+    AuditAttackOutcome:
+      type: object
+      required:
+        - scenario_id
+        - attack_spec_id
+        - risk_surface
+        - predicted_node_id
+        - defense_guards
+      properties:
+        scenario_id:
+          type: string
+        attack_spec_id:
+          type: string
+        risk_surface:
+          type: string
+        predicted_node_id:
+          type: string
+        predicted_path_id:
+          type: [string, "null"]
+        baseline_attack_succeeded:
+          type: [boolean, "null"]
+        baseline_failed_node_id:
+          type: [string, "null"]
+        guarded_attack_succeeded:
+          type: [boolean, "null"]
+        guarded_failed_node_id:
+          type: [string, "null"]
+        defense_guards:
+          type: array
+          items:
+            type: string
+    AuditTraceEvent:
+      type: object
+      required: [event_id, phase, scenario_id, stream, sequence, event_type, title, metadata]
+      properties:
+        event_id:
+          type: string
+        phase:
+          type: string
+          enum: [baseline, guarded]
+        scenario_id:
+          type: string
+        stream:
+          type: string
+          enum: [baseline, clean, controlled, runtime]
+        sequence:
+          type: integer
+          minimum: 0
+        event_type:
+          type: string
+        timestamp:
+          type: [string, "null"]
+        title:
+          type: string
+        summary:
+          type: [string, "null"]
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+    AuditScenarioTrace:
+      type: object
+      required: [trace_id, phase, scenario_id, trajectory_ref, available, event_count, truncated, events]
+      properties:
+        trace_id:
+          type: string
+        phase:
+          type: string
+          enum: [baseline, guarded]
+        scenario_id:
+          type: string
+        trajectory_ref:
+          type: string
+        available:
+          type: boolean
+        event_count:
+          type: integer
+          minimum: 0
+        truncated:
+          type: boolean
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditTraceEvent"
     ToolSpec:
       type: object
       required: [name, risk_level, description]
@@ -172,6 +1594,103 @@ components:
           type: string
         description:
           type: string
+    AgentOnboardingRequest:
+      type: object
+      required: [agent_id, name, source_path, build_manifest_path]
+      properties:
+        schema_version:
+          type: string
+          const: agent-onboarding-request-v0.1
+          default: agent-onboarding-request-v0.1
+        tenant_id:
+          type: string
+          default: private_tenant
+        agent_id:
+          type: string
+        name:
+          type: string
+        domain:
+          type: string
+          default: general
+        integration_type:
+          type: string
+          const: source
+          default: source
+        framework:
+          type: string
+          default: sdk
+        source_path:
+          type: string
+        build_manifest_path:
+          type: string
+          description: agent-sandbox-build-v0.1 JSON file inside source_path.
+        remarks:
+          type: [string, "null"]
+    AgentMaterial:
+      type: object
+      required:
+        - material_id
+        - tenant_id
+        - agent_id
+        - type
+        - source_path
+        - build_manifest_path
+        - source_sha256
+        - build_manifest_sha256
+        - source_snapshot_sha256
+        - source_file_count
+        - source_snapshot_verified
+      properties:
+        material_id:
+          type: string
+        tenant_id:
+          type: string
+        agent_id:
+          type: string
+        type:
+          type: string
+          const: source
+        source_path:
+          type: string
+        build_manifest_path:
+          type: string
+        source_sha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+        build_manifest_sha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+        source_snapshot_sha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+        source_file_count:
+          type: integer
+          minimum: 1
+        source_snapshot_verified:
+          type: boolean
+          const: true
+    AgentOnboardingResponse:
+      type: object
+      required: [tenant_id, agent_id, status, ready, agent, material, profile, stages]
+      properties:
+        tenant_id:
+          type: string
+        agent_id:
+          type: string
+        status:
+          type: string
+        ready:
+          type: boolean
+        agent:
+          $ref: "#/components/schemas/AgentRegistration"
+        material:
+          $ref: "#/components/schemas/AgentMaterial"
+        profile:
+          type: object
+        stages:
+          type: array
+          items:
+            type: object
     AgentRegistration:
       type: object
       required: [agent_id, name]

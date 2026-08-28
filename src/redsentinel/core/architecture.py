@@ -38,7 +38,18 @@ ALLOWED_INTERNAL_DEPENDENCIES: dict[str, frozenset[str]] = {
     ),
     "apps": frozenset({"application", "defenses"}),
     "cli": frozenset(
-        {"core", "profiling", "attacks", "defenses", "runtime", "evaluation", "evolution", "research", "reporting"}
+        {
+            "application",
+            "core",
+            "profiling",
+            "attacks",
+            "defenses",
+            "runtime",
+            "evaluation",
+            "evolution",
+            "research",
+            "reporting",
+        }
     ),
     "migration": frozenset({"core", "research"}),
 }

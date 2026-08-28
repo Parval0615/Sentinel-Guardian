@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
+from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 
 RiskLevel = Literal["low", "medium", "high", "critical"]
@@ -24,7 +24,14 @@ SupervisionDefaultAction = Literal["allow", "deny"]
 SupervisionResponseAction = Literal["approve", "reject"]
 SupervisionResponseStatus = Literal["approved", "rejected", "expired"]
 ReportStatus = Literal["complete", "incomplete"]
-OnboardingStageName = Literal["agent_record", "profile_analysis", "initial_benchmark", "default_defense_mount"]
+OnboardingStageName = Literal[
+    "agent_record",
+    "source_snapshot",
+    "profile_analysis",
+    "sandbox_build_plan",
+    "initial_benchmark",
+    "default_defense_mount",
+]
 OnboardingStageStatus = Literal["completed", "failed", "skipped"]
 AuthUserStatus = Literal["active", "disabled"]
 AuthUserRole = Literal["user", "admin"]
@@ -42,18 +49,6 @@ AuthErrorCode = Literal[
 
 def utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-
-
-def masked_api_key(value: str | None) -> str | None:
-    if not value:
-        return None
-    if len(value) <= 8:
-        return "*" * len(value)
-    return f"{value[:4]}...{value[-4:]}"
-
-
-def _has_text(value: str | None) -> bool:
-    return bool(value and value.strip())
 
 
 def _supervision_event_id() -> str:
@@ -252,14 +247,6 @@ class AgentRegistration(BaseModel):
     data_boundary: dict[str, Any] = Field(default_factory=dict)
 
 
-class AgentApiCredential(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    secret_ref: str | None = None
-    has_api_key: bool = False
-    masked_api_key: str | None = None
-
-
 class AgentOnboardingRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -269,36 +256,11 @@ class AgentOnboardingRequest(BaseModel):
     agent_id: str = Field(min_length=1)
     name: str = Field(min_length=1)
     domain: str = Field(default="general", min_length=1)
-    integration_type: IntegrationType
+    integration_type: Literal["source"] = "source"
     framework: str = Field(default="sdk", min_length=1)
     remarks: str | None = None
-    source_path: str | None = None
-    openapi_path: str | None = None
-    docker_image: str | None = None
-    endpoint_url: str | None = None
-    uploaded_files: list[str] = Field(default_factory=list)
-    api_key: SecretStr | None = Field(default=None, exclude=True)
-
-    @model_validator(mode="after")
-    def validate_integration_material(self) -> "AgentOnboardingRequest":
-        has_uploaded_file = any(_has_text(item) for item in self.uploaded_files)
-        if self.integration_type == "source" and not (
-            _has_text(self.source_path) or _has_text(self.openapi_path) or has_uploaded_file
-        ):
-            raise ValueError("source onboarding requires source_path, openapi_path, or uploaded_files.")
-        if self.integration_type == "docker" and not (_has_text(self.docker_image) or has_uploaded_file):
-            raise ValueError("docker onboarding requires docker_image or uploaded_files.")
-        if self.integration_type == "api" and not _has_text(self.endpoint_url):
-            raise ValueError("api onboarding requires endpoint_url.")
-        return self
-
-    def credential_summary(self, secret_ref: str | None = None) -> AgentApiCredential:
-        value = self.api_key.get_secret_value() if self.api_key is not None else None
-        return AgentApiCredential(
-            secret_ref=secret_ref,
-            has_api_key=value is not None,
-            masked_api_key=masked_api_key(value),
-        )
+    source_path: str = Field(min_length=1)
+    build_manifest_path: str = Field(min_length=1)
 
 
 class AgentMaterial(BaseModel):
@@ -310,6 +272,18 @@ class AgentMaterial(BaseModel):
     agent_id: str = Field(min_length=1)
     type: IntegrationType
     source_path: str | None = None
+    build_manifest_path: str | None = None
+    source_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    build_manifest_sha256: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+    )
+    source_snapshot_sha256: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+    )
+    source_file_count: int = Field(default=0, ge=0)
+    source_snapshot_verified: bool = False
     openapi_path: str | None = None
     docker_image: str | None = None
     endpoint_url: str | None = None
@@ -498,6 +472,7 @@ class EvaluationRequest(BaseModel):
     pilot_preset: str | None = None
     attack_intensity: Literal["light", "medium", "heavy"] = "medium"
     defense_enabled: bool = True
+    seed: int = 42
     scenarios: list[str] = Field(default_factory=list)
     policy: dict[str, Any] = Field(default_factory=lambda: {
         "no_real_payment": True,

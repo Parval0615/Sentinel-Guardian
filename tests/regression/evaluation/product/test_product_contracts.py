@@ -53,22 +53,24 @@ def test_product_contracts_import_and_validate() -> None:
 def test_product_agent_benchmark_log_and_metric_contracts_validate() -> None:
     onboarding = AgentOnboardingRequest(
         tenant_id="tenant_001",
-        agent_id="agent_api",
-        name="API Agent",
-        integration_type="api",
-        endpoint_url="https://example.test/v1/chat",
-        api_key="sk-live-secret",
+        agent_id="agent_source",
+        name="Source Agent",
+        integration_type="source",
+        source_path="/workspace/agent",
+        build_manifest_path="/workspace/agent/sandbox-build.json",
     )
-    credential = onboarding.credential_summary(secret_ref="local://tenant_001/agent_api/api_key")
     material = AgentMaterial(
         material_id="mat_001",
         tenant_id=onboarding.tenant_id,
         agent_id=onboarding.agent_id,
-        type="api",
-        endpoint_url=onboarding.endpoint_url,
-        secret_ref=credential.secret_ref,
-        has_api_key=credential.has_api_key,
-        masked_api_key=credential.masked_api_key,
+        type="source",
+        source_path=onboarding.source_path,
+        build_manifest_path=onboarding.build_manifest_path,
+        source_sha256="a" * 64,
+        build_manifest_sha256="b" * 64,
+        source_snapshot_sha256="c" * 64,
+        source_file_count=3,
+        source_snapshot_verified=True,
     )
     profile = AgentProfile(
         profile_id="profile_001",
@@ -161,9 +163,8 @@ def test_product_agent_benchmark_log_and_metric_contracts_validate() -> None:
     detail = LogDetail(summary=summary, total_case_count=1, target_nodes=["tool_node"])
 
     assert "api_key" not in onboarding.model_dump(mode="json")
-    assert credential.has_api_key is True
-    assert credential.masked_api_key == "sk-l...cret"
-    assert material.secret_ref == "local://tenant_001/agent_api/api_key"
+    assert material.source_snapshot_verified is True
+    assert material.source_snapshot_sha256 == "c" * 64
     assert profile.nodes[0].critical is True
     assert version.cases[0].case_type == "attack"
     assert benchmark_summary.case_count == 1

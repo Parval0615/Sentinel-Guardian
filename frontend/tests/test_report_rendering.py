@@ -113,14 +113,14 @@ def test_public_homepage_contains_required_sections_and_workspace_ctas() -> None
         assert element_id in dom.ids
 
     for label in {
-        "Real-time Agent Security Ops",
+        "Autonomous Agent Security Audit",
         "核心能力",
         "使用流程",
         "信任信息",
-        "进入产品工作区",
-        "Agent 接入",
-        "安全评测",
-        "报告与日志",
+        "查看审计工作区",
+        "自主测试规划",
+        "隔离攻击与加固",
+        "上线决策与证据",
         "下一轮攻击",
         "租户上下文",
         "密钥不落盘",
@@ -503,13 +503,17 @@ def test_score_from_findings() -> None:
     ]) == 0
 
 
-def test_agent_onboarding_dom_contains_dynamic_mode_fields() -> None:
+def test_agent_onboarding_dom_contains_source_only_fields() -> None:
     dom = _parse_dashboard_index()
 
     assert "agent-onboarding-form" in dom.ids
     assert "agent-onboarding" in dom.ids
-    assert {input_attrs.get("value") for input_attrs in dom.inputs if input_attrs.get("name") == "integration_type"} == {"source", "docker", "api"}
-    assert dom.data_method_panels == {"source", "docker", "api"}
+    assert {
+        input_attrs.get("value")
+        for input_attrs in dom.inputs
+        if input_attrs.get("name") == "integration_type"
+    } == {"source"}
+    assert dom.data_method_panels == {"source"}
 
     for field_id, label in {
         "onboard-username": "用户名",
@@ -518,14 +522,15 @@ def test_agent_onboarding_dom_contains_dynamic_mode_fields() -> None:
         "onboard-domain": "业务领域",
         "onboard-framework": "框架类型",
         "onboard-remarks": "备注",
+        "onboard-source-path": "源码目录",
+        "onboard-build-manifest-path": "沙箱构建清单",
     }.items():
         assert field_id in dom.ids
         assert dom.labels[field_id] == label
 
-    assert "onboard-source-files" in dom.ids
-    assert "onboard-docker-files" in dom.ids
-    assert "onboard-endpoint-url" in dom.ids
-    assert "onboard-api-key" in dom.ids
+    assert "onboard-docker-files" not in dom.ids
+    assert "onboard-endpoint-url" not in dom.ids
+    assert "onboard-api-key" not in dom.ids
 
 
 def test_agent_onboarding_autogen_option_is_scaffold_only() -> None:
@@ -546,10 +551,14 @@ def test_agent_onboarding_loading_profile_and_username_dom() -> None:
     dom = _parse_dashboard_index()
 
     assert "onboarding-progress" in dom.ids
-    assert dom.data_stages == {"profile_analysis", "initial_benchmark", "default_defense_mount"}
+    assert dom.data_stages == {
+        "source_snapshot",
+        "profile_analysis",
+        "sandbox_build_plan",
+    }
+    assert "源码快照" in html
     assert "画像分析" in html
-    assert "首轮 benchmark" in html
-    assert "防御挂载" in html
+    assert "沙箱构建计划" in html
 
     assert "agent-profile-card" in dom.ids
     assert "profile-tenant-id" in dom.ids
@@ -557,16 +566,24 @@ def test_agent_onboarding_loading_profile_and_username_dom() -> None:
     assert '<div class="profile-label">用户名</div>' in html
 
 
-def test_agent_onboarding_script_covers_switch_loading_profile_and_fallback() -> None:
+def test_agent_onboarding_script_covers_source_loading_profile_and_fallback() -> None:
     html = _dashboard_index_html()
 
-    assert "function switchOnboardingType(type)" in html
-    assert "panel.hidden = panel.dataset.methodPanel !== type" in html
+    assert "function switchOnboardingType(type)" not in html
+    assert "panel.hidden = panel.dataset.methodPanel !== type" not in html
     assert "async function handleAgentOnboardingSubmit(event)" in html
-    assert "setOnboardingStageStatus('profile_analysis', 'running')" in html
+    assert "source_path: readFieldValue('onboard-source-path')" in html
+    assert "build_manifest_path: readFieldValue('onboard-build-manifest-path')" in html
+    assert "setOnboardingStageStatus('source_snapshot', 'running')" in html
     assert "await runOnboardingProgress(responseData.stages)" in html
     assert "fetch('/v1/agents/onboard'" in html
     assert "function buildOfflineOnboardingResponse(payload, error)" in html
+    assert "status: 'failed'" in html
+    assert "ready: false" in html
+    assert "source_snapshot_verified: false" in html
+    assert "endpoint_url:" not in html
+    assert "api_key:" not in html
+    assert "docker_image:" not in html
     assert "首页安全统计未被改写" in html
     assert "setText('profile-tenant-id'" in html
 
@@ -902,10 +919,9 @@ def test_benchmark_evaluation_start_progress_and_next_round_binding() -> None:
     assert "tenant_id: tenantId" in html
     assert "benchmark_id: benchmarkId" in html
     assert "benchmark_version: benchmarkVersion" in html
-    assert "const DEMO_EVALUATION_MODE = 'offline_trace';" in html
     assert "mode: getEvaluationMode()" in html
     assert "function getEvaluationMode()" in html
-    assert "currentAgentIntegration === 'api' && currentAgentHasApiKey ? 'hosted_api' : DEMO_EVALUATION_MODE" in html
+    assert "currentAgentSandboxAdapter === 'openmanus' ? 'openmanus_real' : 'sdk'" in html
 
     assert "fetch('/v1/evaluations', {" in html
     assert "method: 'POST'" in html
@@ -932,7 +948,7 @@ def test_benchmark_evaluation_start_progress_and_next_round_binding() -> None:
     assert "progress.percent" in html
     assert "progress.current_case" in html
     assert "progress.current_node" in html
-    assert "status?.mode || DEMO_EVALUATION_MODE" in html
+    assert "status?.mode || getEvaluationMode()" in html
     assert "setText('evaluation-mode', evaluationMode)" in html
 
     assert "escapeHtml(scenarioId)" in html
@@ -974,3 +990,108 @@ def test_next_round_attack_control_status_api_and_prompt_refresh_logic() -> None
     assert "setBenchmarkStatus('已切换到新版本 ' + result.benchmark_version + '，prompt 已刷新。', 'success')" in html
     assert "result.updated_prompt_count ?? result.version?.case_count ?? result.version?.cases?.length" in html
     assert "defense_suggestions" in html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def test_c2_audit_plan_page_exposes_real_plan_context_and_empty_state() -> None:
+    html = _dashboard_index_html()
+    dom = _parse_dashboard_index()
+
+    required_ids = {
+        "audit-plan-entry-link",
+        "audit-plan",
+        "audit-plan-id-input",
+        "audit-plan-load-button",
+        "audit-plan-state",
+        "audit-plan-status",
+        "audit-plan-empty-state",
+        "audit-plan-content",
+        "audit-plan-items",
+        "audit-plan-budget",
+        "audit-plan-normal-tasks",
+        "audit-plan-stop-conditions",
+        "audit-plan-warnings",
+    }
+    assert required_ids <= dom.ids
+    assert 'id="audit-plan" aria-labelledby="audit-plan-title" hidden' in html
+    assert "C2 / Autonomous Planning" in html
+    assert "function initAuditPlan()" in html
+    assert "function showAuditPlan()" in html
+    assert "function loadAuditPlan()" in html
+    assert "function renderAuditPlan(view)" in html
+    assert "function renderAuditPolicyList(targetId, values)" in html
+    assert "fetch('/v1/audits/' + encodeURIComponent(auditId) + '/plan', {" in html
+    assert "未展示演示计划或伪造场景。" in html
+    assert "escapeHtml(item.scenario_id" in html
+    assert "escapeHtml(item.rationale" in html
+
+
+def test_c5_audit_workspace_renders_real_checkpoint_sections() -> None:
+    html = _dashboard_index_html()
+    dom = _parse_dashboard_index()
+
+    required_ids = {
+        "audit-workspace-entry-link",
+        "audit-workspace-c5",
+        "audit-workspace-id-input",
+        "audit-workspace-select",
+        "audit-workspace-load-button",
+        "audit-workspace-create",
+        "audit-workspace-create-button",
+        "audit-create-agent-id",
+        "audit-create-normal-task",
+        "audit-create-success-criteria",
+        "audit-create-security-goals",
+        "audit-create-risk-surfaces",
+        "audit-workspace-state",
+        "audit-workspace-status",
+        "audit-workspace-empty-state",
+        "audit-workspace-content",
+        "audit-workspace-assets",
+        "audit-workspace-stages",
+        "audit-workspace-risks",
+        "audit-workspace-scores",
+        "audit-workspace-timeline",
+        "audit-workspace-traces",
+        "audit-workspace-decision",
+        "audit-workspace-evidence",
+    }
+    assert required_ids <= dom.ids
+    assert (
+        'id="audit-workspace-c5" aria-labelledby="audit-workspace-title" hidden'
+        in html
+    )
+    assert "C5 / Audit Workspace" in html
+    assert "function initAuditWorkspace()" in html
+    assert "function showAuditWorkspace()" in html
+    assert "function loadAuditWorkspaceList()" in html
+    assert "function loadAuditWorkspace()" in html
+    assert "function createAuditFromWorkspace()" in html
+    assert "function renderAuditWorkspace(view)" in html
+    assert "function renderAuditWorkspaceScores(view)" in html
+    assert "function renderAuditWorkspaceTimeline(view)" in html
+    assert "function renderAuditWorkspaceTraces(traces)" in html
+    assert "auditWorkspaceMetric(baseline, 'asr', 'attack_success_rate')" in html
+    assert "escapeHtml(event.summary)" in html
+    assert "escapeHtml(trace.trajectory_ref || '--')" in html
+    assert "fetch('/v1/audits', { headers: authHeaders() })" in html
+    assert "method: 'POST'" in html
+    assert "body: JSON.stringify(payload)" in html
+    assert (
+        "fetch('/v1/audits/' + encodeURIComponent(auditId) + '/workspace', {"
+        in html
+    )
+    assert "未展示示例结论或伪造证据。" in html
+    assert "auditDecisionLabel(decision.decision)" in html
+    assert "escapeHtml(item.ref || '--')" in html

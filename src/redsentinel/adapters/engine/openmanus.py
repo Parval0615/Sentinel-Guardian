@@ -41,7 +41,9 @@ class OpenManusAdapter(AgentAdapter):
 
     def send_message(self, user_id: str, message: str, context: dict[str, Any]) -> AgentTurnResult:
         inferred = _infer_tool_call(message)
-        decision = _decision_to_dict(self._intercept(inferred.call_type, inferred.payload))
+        decision = _decision_to_dict(
+            self._intercept(inferred.call_type, inferred.payload, context)
+        )
         blocked = decision["decision"] in {"deny", "ask"}
         payload = {} if blocked else self._run(user_id, message, context)
         redacted_message = _redact(message)
@@ -86,9 +88,48 @@ class OpenManusAdapter(AgentAdapter):
             raise TypeError("OpenManus runner must return a dict payload.")
         return payload
 
-    def _intercept(self, call_type: str, payload: dict[str, Any]) -> Any:
+    def _intercept(
+        self,
+        call_type: str,
+        payload: dict[str, Any],
+        context: dict[str, Any],
+    ) -> Any:
+        if context.get("defense_mode") == "baseline":
+            return _allow_without_guard(call_type)
+        if context.get("remediation_bundle_id"):
+            active_guards = {
+                str(item) for item in context.get("active_guards") or []
+            }
+            if not active_guards.intersection(_guards_for_call_type(call_type)):
+                return _allow_without_guard(call_type)
         intercept = self._monitor_intercept or _default_monitor_intercept()
         return intercept(call_type, payload)
+
+
+def _guards_for_call_type(call_type: str) -> set[str]:
+    return {
+        "llm_input": {"input_firewall", "goal_guard", "monitor_policy"},
+        "code_execution": {"tool_policy", "file_policy", "network_policy", "monitor_policy"},
+        "file_access": {"file_policy", "tool_policy", "monitor_policy"},
+        "tool_call": {
+            "tool_policy",
+            "network_policy",
+            "permission_guard",
+            "monitor_policy",
+        },
+        "llm_output": {"output_filter", "monitor_policy"},
+    }.get(call_type, {"monitor_policy"})
+
+
+def _allow_without_guard(call_type: str) -> dict[str, Any]:
+    return {
+        "decision": "allow",
+        "reason": "remediation_guard_not_installed",
+        "risk_score": 0.0,
+        "confidence": 1.0,
+        "rules": ["remediation.guard_not_installed"],
+        "call_type": call_type,
+    }
 
 
 def _default_monitor_intercept() -> MonitorIntercept:
@@ -176,6 +217,13 @@ def _infer_tool_call(message: str) -> InferredToolCall:
             arguments={"query": url},
         )
 
+    if _looks_like_browser_search(lower):
+        return _tool_call(
+            call_type="tool_call",
+            tool_name="browser_search",
+            arguments={"query": text},
+        )
+
     if _looks_like_file_operation(text, lower):
         action = _extract_file_action(lower)
         path = _first_path(text) or text
@@ -195,9 +243,10 @@ def _infer_tool_call(message: str) -> InferredToolCall:
         )
 
     return _tool_call(
-        call_type="tool_call",
-        tool_name="browser_search",
-        arguments={"query": text},
+        call_type="llm_input",
+        tool_name="prompt_input",
+        arguments={"message": text},
+        extra_payload={"message": text},
     )
 
 
@@ -364,6 +413,28 @@ def _looks_like_api_call(text: str, lower: str) -> bool:
     return bool(_HTTP_METHOD_RE.search(text)) or any(
         marker in lower
         for marker in ("api_call", "api ", "http request", "接口", "调用api", "调用 api", "curl ")
+    )
+
+
+def _looks_like_browser_search(lower: str) -> bool:
+    return any(
+        marker in lower
+        for marker in (
+            "browser_search",
+            "search ",
+            "search for",
+            "look up",
+            "browse ",
+            "搜索",
+            "检索",
+            "查询",
+            "查找",
+            "访问",
+            "浏览",
+            "查一下",
+            "搜一下",
+            "查手机号",
+        )
     )
 
 

@@ -24,7 +24,7 @@ def render_modern_dashboard(report: AgentSecurityReport) -> str:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RedSentinel - Agent Security Dashboard</title>
+  <title>RedSentinel - Agent 上线安全审计报告</title>
   <style>
     :root {{
       --primary: #2563eb;
@@ -155,7 +155,7 @@ def render_modern_dashboard(report: AgentSecurityReport) -> str:
 <body>
   <div class="container">
     <header>
-      <h1>🔒 RedSentinel - Agent Security Dashboard</h1>
+      <h1>🔒 RedSentinel - Agent 上线安全审计报告</h1>
       <p>Agent: <code>{escape(report.agent_id)}</code> | Tenant: <code>{escape(report.tenant_id)}</code> | Benchmark: <code>{escape(report.benchmark)}</code></p>
     </header>
     <div class="metrics-grid" id="metrics-grid">

@@ -3,6 +3,17 @@
 闭环（单个威胁类别）：
     规划(plan) → 执行(execute) → 命中? → 是: 记入经验库 / 否: 反思(reflect) → 重规划(replan)
 
+if TYPE_CHECKING:
+    from redsentinel.application.image_profile_contracts import (
+        AttackProfile,
+        ImageAgentProfile,
+    )
+
+if TYPE_CHECKING:
+    from redsentinel.application.image_profile_contracts import (
+        AttackProfile,
+        ImageAgentProfile,
+    )
 整体战役 ``run_attack_campaign`` 在 7 类威胁上迭代：
     1. 每轮对所有"尚未攻破"的类别发起当前成熟度的攻击；
     2. 失败的类别触发 reflection，把攻击成熟度沿 escalation ladder 升级；
@@ -16,7 +27,7 @@ LLM 用法：攻击规划话术(rationale)由共享 LLM 客户端生成；是否
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from redsentinel.profiling import CodeProfileCandidate
 from redsentinel.attacks.engine.attack_spec import AttackSpec
@@ -28,6 +39,12 @@ from redsentinel.attacks.engine.threat_taxonomy import (
     SyntheticTarget,
     ladder_for,
 )
+
+if TYPE_CHECKING:
+    from redsentinel.application.image_profile_contracts import (
+        AttackProfile,
+        ImageAgentProfile,
+    )
 
 
 @dataclass
@@ -53,6 +70,7 @@ class AttackAttempt:
     attack_source: str | None = None
     profile_source: str | None = None
     success_criteria: list[str] = field(default_factory=list)
+    attack_metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -136,6 +154,24 @@ class AttackAgent:
         from redsentinel.attacks.engine.profile_driven import build_profile_driven_attack_plan_from_candidate
 
         plan = build_profile_driven_attack_plan_from_candidate(candidate)
+        return cls(profile_attack_specs=plan.specs, **kwargs)
+
+    @classmethod
+    def from_image_profile(cls, profile: ImageAgentProfile, **kwargs: Any) -> "AttackAgent":
+        from redsentinel.attacks.engine.profile_driven import (
+            build_image_profile_driven_attack_plan,
+        )
+
+        plan = build_image_profile_driven_attack_plan(profile)
+        return cls(profile_attack_specs=plan.specs, **kwargs)
+
+    @classmethod
+    def from_attack_profile(cls, profile: AttackProfile, **kwargs: Any) -> "AttackAgent":
+        from redsentinel.attacks.engine.profile_driven import (
+            build_attack_profile_driven_attack_plan,
+        )
+
+        plan = build_attack_profile_driven_attack_plan(profile)
         return cls(profile_attack_specs=plan.specs, **kwargs)
 
     # -- 规划 -----------------------------------------------------------
@@ -283,6 +319,7 @@ class AttackAgent:
                 attack_source=str(spec.metadata.get("source") or ""),
                 profile_source=spec.metadata.get("profile_source"),
                 success_criteria=list(spec.success_criteria),
+                attack_metadata=dict(spec.metadata),
             )
             self.attempts.append(attempt)
             if response.success:

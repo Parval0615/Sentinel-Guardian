@@ -54,6 +54,15 @@ async def _run(args: argparse.Namespace, writer: EventWriter) -> int:
 
     original_execute_tool = ToolCallAgent.execute_tool
     defense_mode = args.defense_mode
+    active_guards = (
+        None
+        if args.active_guards == "*"
+        else {
+            item.strip()
+            for item in args.active_guards.split(",")
+            if item.strip()
+        }
+    )
     guard_intervened = False
     context = {
         "scenario_id": args.scenario_id,
@@ -62,7 +71,11 @@ async def _run(args: argparse.Namespace, writer: EventWriter) -> int:
         "user_id": args.user_id,
         "agent_id": args.agent_id,
     }
-    input_decision = evaluate_prompt(args.prompt, defense_mode=defense_mode)
+    input_decision = evaluate_prompt(
+        args.prompt,
+        defense_mode=defense_mode,
+        active_guards=active_guards,
+    )
     writer.write(
         "monitor_decision",
         **context,
@@ -108,7 +121,12 @@ async def _run(args: argparse.Namespace, writer: EventWriter) -> int:
             arguments=arguments,
         )
 
-        decision = evaluate_tool(name, arguments, defense_mode=defense_mode)
+        decision = evaluate_tool(
+            name,
+            arguments,
+            defense_mode=defense_mode,
+            active_guards=active_guards,
+        )
         writer.write(
             "monitor_decision",
             **context,
@@ -310,6 +328,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--scenario-id", required=True)
     parser.add_argument("--case-type", required=True, choices=["clean", "controlled", "baseline"])
     parser.add_argument("--defense-mode", required=True, choices=["baseline", "guarded"])
+    parser.add_argument("--active-guards", default="")
     parser.add_argument("--user-id", default="openmanus_user")
     parser.add_argument("--agent-id", default="openmanus_official")
     parser.add_argument("--max-steps", type=int, default=int(os.environ.get("OPENMANUS_MAX_STEPS", "6")))

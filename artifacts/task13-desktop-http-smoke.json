@@ -1,0 +1,8 @@
+{
+  "agent_ids": [
+    "ecommerce",
+    "openmanus"
+  ],
+  "health": 200,
+  "storage_root": "/tmp/sentinel-task15-*/smoke-storage"
+}

@@ -315,7 +315,7 @@ def _render_legacy_html_dashboard(report: AgentSecurityReport) -> str:
 <body>
   <main>
     <header>
-      <h1>RedSentinel - Agent Security Dashboard</h1>
+      <h1>RedSentinel - Agent 上线安全审计报告</h1>
       <p>Read-only view for <code>{escape(report.agent_id)}</code> in tenant <code>{escape(report.tenant_id)}</code>.</p>
     </header>
     <div class="meta">

@@ -1,3 +1,5 @@
+import subprocess
+import sys
 from pathlib import Path
 
 from redsentinel.application.contracts import AgentRegistration, EvaluationRequest
@@ -8,6 +10,22 @@ from redsentinel.application.engine.domain_services import (
     SupervisionBridgeService,
 )
 from redsentinel.application.engine.service import ProductEvaluationService
+
+
+def test_importing_product_service_does_not_load_domain_services() -> None:
+    script = """
+import importlib
+import sys
+import tempfile
+
+module = importlib.import_module("redsentinel.application.engine.service")
+assert "redsentinel.application.engine.domain_services" not in sys.modules
+with tempfile.TemporaryDirectory() as storage_root:
+    module.ProductEvaluationService(storage_root)
+assert "redsentinel.application.engine.domain_services" in sys.modules
+"""
+
+    subprocess.run([sys.executable, "-c", script], check=True)
 
 
 def test_product_service_composes_independent_domain_services(tmp_path: Path) -> None:

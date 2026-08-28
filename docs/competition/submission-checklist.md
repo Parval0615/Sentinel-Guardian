@@ -1,75 +1,68 @@
-# RedSentinel 提交前检查清单
+# Sentinel-Guardian 参赛提交检查清单
 
-## 必须包含
+## 产品口径
 
-- 根目录 `README.md`
-- `docs/competition/README.md`
-- `docs/competition/final-report.md`
-- `docs/competition/defense-script-8min.md`
-- `docs/competition/reproducibility.md`
-- `docs/competition/submission-checklist.md`
-- `docs/competition/evidence-pack/`
-- `auto_attack_system/`
-- `auto_defense_system/`
-- `auto_evaluation_system/`
-- `agent_integration_system/`
-- `sdk/python/`
-- `run.py`
-- `pyproject.toml`
+- [x] 对外名称统一为 Sentinel-Guardian。
+- [x] 具体问题定义为“企业 Agent 上线前缺少自动化安全验收”。
+- [x] 最终交付是四态上线决策与证据报告。
+- [x] 攻击变异和防御优化只作为竞赛审计闭环内部能力。
+- [x] 仓库不再维护独立研究、论文或求职路线。
+- [ ] 统一审计任务入口可以触发完整工作流。
+- [ ] 可视化展示结构化测试计划及其执行状态。
+- [ ] 报告页面展示允许上线、修复复测、禁止上线或人工审批。
 
-## 固定证据文件
+## 演示案例
 
-确认以下文件存在：
+- [ ] 企业知识助手可以完成公开资料总结等正常任务。
+- [ ] Agent 具备受控 Browser、文件和 Python 工具。
+- [ ] 至少演示提示注入、敏感文件读取、路径穿越和 SSRF。
+- [ ] 展示一次真实攻击效果和对应风险节点。
+- [ ] 展示局部 Guard 生成与安装。
+- [ ] 使用相同 case、模型、seed 和预算完成复测。
+- [ ] 证明正常业务任务在加固后仍成功。
 
-- `docs/competition/evidence-pack/convergence_curve.png`
-- `docs/competition/evidence-pack/damage_radar.png`
-- `docs/competition/evidence-pack/convergence.json`
-- `docs/competition/evidence-pack/ablation.json`
-- `docs/competition/evidence-pack/ablation_table.md`
-- `docs/competition/evidence-pack/benchmark_datacard.md`
-- `docs/competition/evidence-pack/evidence_pack.md`
-- `docs/competition/evidence-pack/README.md`
+## 证据边界
 
-## 不要提交或打包
+- [x] 离线 smoke 与真实 runtime 结果分开展示。
+- [x] OpenManus W2 rerun10 标明单 Agent、单模型、单 seed。
+- [x] 邮件场景标记 `not_applicable`，适用覆盖为 5/6。
+- [x] 环境失败、模型拒答和 Guard 拦截分别统计。
+- [x] 所有数字可以定位到 evidence bundle。
+- [x] 当前全量测试结果已更新为 `840 passed`。
+- [x] `840 passed` 已在当前工作树验证；不使用未验证的跨 Agent 效果数字。
 
-- `Agent-Runtime-Security-Lab/`：本地嵌套 clone，只用于合并对照。
-- `ROADMAP.md`：过程型工程路线图，不进入最终提交包。
-- `.venv/`、`venv/`
-- `.pytest_cache/`、`.ruff_cache/`
-- `__pycache__/`
-- `runs/`、`attack-runs/`、`defense-runs/`、`evidence-runs/`
-- `logs/`、`storage/`
-- `.env`
+## 复现
 
-## 推荐提交方式
-
-优先使用 Git 提交或从 Git 跟踪文件导出，不建议直接压缩整个工作目录。直接压缩容易把本地嵌套 clone、缓存、虚拟环境和运行产物一起打进去。
-
-## 提交前验证命令
-
-```powershell
-python run.py --demo
-python run.py --comp2 --offline
-python run.py --comp3 --offline
-python run.py --comp4 --offline
-python run-openmanus-real.py --build-image --require-real
-$env:PYTHONPATH="agent_integration_system/src;auto_evaluation_system/src"; python -m agent_integration_system.cli validate examples/agents/simple_agent/redsentinel.yaml
-$env:PYTHONPATH="agent_integration_system/src;auto_evaluation_system/src"; python -m agent_integration_system.cli profile examples/agents/simple_agent/redsentinel.yaml --output runs/m0-agent-profile.json
+```bash
+python -m pip install -e ".[all,dev]"
+redsentinel doctor --dry-run
+redsentinel demo --output-dir artifacts --seed 42
 python -m pytest -q
-python -m pytest agent_integration_system/tests auto_evaluation_system/tests/contracts -q
-python -m compileall -q agent_integration_system auto_attack_system auto_defense_system auto_evaluation_system sdk
+python -m ruff check . --select F401,F841,F821,F811
 ```
 
-## 关键数字一致性
+- [ ] 新环境可以在 10 分钟内完成离线演示。
+- [ ] summary 中的 profile、report、provenance 和 evidence refs 均可打开。
+- [ ] 前端页面能够加载结构化报告。
+- [ ] 真实运行说明不包含 API key 或其他凭据。
 
-- Adaptive Defense ASR：44% → 0%
-- Taxonomy Monitor ASR：98.1% → 12.4%
-- 收敛轮数：7
-- Attack reflection 消融：2/7 vs 7/7
-- Defense 消融：Adaptive Defense ASR 保持 44%
-- 精准加固误伤率：0%
-- OpenManus 真实运行：`OPENMANUS_REAL_RUNTIME=true`，`SIMULATED=false`
-- OpenManus benchmark：`openmanus-security-v0.1`
-- P0/M0 契约：`agent-manifest-v1` / `agent-profile-v1` / `optimization-directive-v1`
-- M0 聚焦测试：14 passed
-- 全量测试：302 collected (300 passed, 1 failed, 1 skipped)（安装 `.[all]` 后）
+## 提交材料
+
+- [x] [`README.md`](../../README.md)
+- [x] [`ROADMAP.md`](../../ROADMAP.md)
+- [x] [`README.md`](./README.md)
+- [x] [`final-report.md`](./final-report.md)
+- [x] [`defense-script-8min.md`](./defense-script-8min.md)
+- [x] [`reproducibility.md`](./reproducibility.md)
+- [x] [`evidence-pack/`](./evidence-pack/)
+- [ ] 3–5 分钟演示视频
+- [ ] 一页系统架构图
+- [ ] 企业知识助手案例截图或录屏
+- [ ] 最终测试与 secret scan 记录
+
+## 安全检查
+
+- [ ] 仅使用授权、本地或明确隔离的目标。
+- [ ] 不连接真实支付、真实企业数据或未授权系统。
+- [ ] artifact、日志和截图通过 secret scan。
+- [ ] 自动上线建议保留人工审批与责任边界说明。

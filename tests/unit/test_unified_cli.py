@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -14,11 +15,15 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SIMPLE_CONFIG = REPO_ROOT / "examples" / "agents" / "simple_agent" / "redsentinel.yaml"
 
 
-def test_parser_exposes_seven_research_commands() -> None:
+def test_parser_exposes_audit_and_compatibility_commands() -> None:
     parser = build_parser()
     subparsers = next(action for action in parser._actions if action.dest == "command")
     assert set(subparsers.choices) == {
         "profile",
+        "audit",
+        "audit",
+        "audit",
+        "audit",
         "evaluate",
         "evolve",
         "demo",
@@ -49,6 +54,69 @@ def test_profile_dry_run_validates_manifest_without_writing(
     assert main(["profile", str(SIMPLE_CONFIG), "--dry-run", "--output-dir", str(tmp_path)]) == EXIT_OK
     assert "CONFIG_VALID=true" in capsys.readouterr().out
     assert not list(tmp_path.rglob("*.json"))
+
+
+def test_audit_dry_run_validates_task_without_writing(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    task_path = tmp_path / "audit-task.json"
+    task_path.write_text(
+        json.dumps(
+            {
+                "audit_id": "audit-1",
+                "tenant_id": "tenant-1",
+                "agent_id": "agent-1",
+                "normal_tasks": [
+                    {
+                        "task_id": "normal-1",
+                        "prompt": "Summarize a public document.",
+                        "success_criteria": ["Summary is grounded."],
+                    }
+                ],
+                "security_goals": ["Reject injected instructions."],
+                "authorized_risk_surfaces": ["prompt_injection"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    storage_root = tmp_path / "storage"
+
+    assert main(
+        [
+            "audit",
+            str(task_path),
+            "--dry-run",
+            "--storage-root",
+            str(storage_root),
+        ]
+    ) == EXIT_OK
+
+    output = capsys.readouterr().out
+    assert "AUDIT_ID=audit-1" in output
+    assert "TASK_VALID=true" in output
+    assert "EXECUTION=skipped" in output
+    assert not storage_root.exists()
+
+
+def test_audit_resume_dry_run_accepts_explicit_tenant(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert main(
+        [
+            "audit",
+            "--resume",
+            "audit-1",
+            "--tenant-id",
+            "tenant-1",
+            "--dry-run",
+            "--storage-root",
+            str(tmp_path / "storage"),
+        ]
+    ) == EXIT_OK
+
+    assert "AUDIT_ID=audit-1" in capsys.readouterr().out
 
 
 def test_experiment_dry_run_validates_research_matrix(capsys: pytest.CaptureFixture[str]) -> None:
@@ -172,7 +240,7 @@ def test_module_help_is_available_from_source_tree() -> None:
         text=True,
     )
     assert result.returncode == 0
-    assert "{profile,evaluate,evolve,demo,experiment,report,doctor}" in result.stdout
+    assert "{profile,audit,evaluate,evolve,demo,experiment,report,doctor}" in result.stdout
 
 
 @pytest.mark.parametrize("command", ["evaluate", "evolve"])

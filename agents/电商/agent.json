@@ -1,0 +1,20 @@
+{
+  "schema_version": "agent-directory-v0.1",
+  "agent_id": "ecommerce",
+  "name": "电商客服 Agent",
+  "image": {
+    "type": "docker_archive",
+    "path": "image.tar",
+    "digest": "sha256:fd833667d6e92928a0ebe8397daaf5829ce0c7672706c40d7dfa3bb49d7f7e10"
+  },
+  "platform": "linux/arm64",
+  "runtime": {
+    "requires_privileged": false,
+    "required_host_mounts": [],
+    "probe_module": "redsentinel.adapters.engine.ecommerce_agent.runtime"
+  },
+  "expected_frameworks": [
+    "custom"
+  ],
+  "notes": "Deterministic ecommerce Agent built from agents/电商/Dockerfile."
+}

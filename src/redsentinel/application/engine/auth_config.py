@@ -76,14 +76,38 @@ PUBLIC_STATIC_PATH_PREFIXES: tuple[str, ...] = (
 PROTECTED_ROUTE_RULES: tuple[RouteRule, ...] = (
     RouteRule("GET", "/v1/auth/me"),
     RouteRule("POST", "/v1/auth/logout"),
+    RouteRule("POST", "/v1/demo/agents/ecommerce"),
     RouteRule("POST", "/v1/agents/onboard"),
     RouteRule("POST", "/v1/agents"),
+    RouteRule("GET", "/v1/agents"),
+    RouteRule("POST", "/v1/agents/import-image"),
+    RouteRule("GET", "/v1/agents/index-errors"),
+    RouteRule("DELETE", "/v1/agents/{agent_id}"),
     RouteRule("GET", "/v1/agents/{agent_id}"),
     RouteRule("GET", "/v1/agents/{agent_id}/profile"),
+    RouteRule("POST", "/v1/agents/{agent_id}/profiles"),
+    RouteRule("GET", "/v1/agents/{agent_id}/profiles/latest"),
+    RouteRule("GET", "/v1/agents/{agent_id}/profiles/{analysis_id}/status"),
+    RouteRule("POST", "/v1/agents/{agent_id}/profiles/{analysis_id}/retry"),
     RouteRule("POST", "/v1/agents/{agent_id}/sessions"),
     RouteRule("POST", "/v1/evaluations"),
     RouteRule("GET", "/v1/evaluations/{evaluation_id}"),
     RouteRule("POST", "/v1/evaluations/{evaluation_id}/next-round"),
+    RouteRule("POST", "/v1/audits"),
+    RouteRule("POST", "/v1/audits/{audit_id}/execute"),
+    RouteRule("GET", "/v1/audits/{audit_id}"),
+    RouteRule("GET", "/v1/audits/{audit_id}/status"),
+    RouteRule("GET", "/v1/audits/{audit_id}/plan"),
+    RouteRule("GET", "/v1/audits/{audit_id}/evidence"),
+    RouteRule("GET", "/v1/audits/{audit_id}/decision"),
+    RouteRule("GET", "/v1/audits/{audit_id}/workspace"),
+    RouteRule("POST", "/v1/audits/{audit_id}/resume"),
+    RouteRule("POST", "/v1/audits/{audit_id}/next-round"),
+    RouteRule("GET", "/v1/runtime/openmanus/status"),
+    RouteRule("POST", "/v1/runtime/openmanus/config"),
+    RouteRule("GET", "/v1/runtime/models/status"),
+    RouteRule("GET", "/v1/runtime/audit-preflight/{agent_id}"),
+    RouteRule("POST", "/v1/runtime/models/{role}/test"),
     RouteRule("GET", "/v1/reports/{report_id}"),
     RouteRule("GET", "/v1/logs"),
     RouteRule("GET", "/v1/logs/{evaluation_id}"),
@@ -175,9 +199,10 @@ def _clean_path(path: str) -> str:
 
 
 def _template_pattern(path_template: str) -> str:
-    escaped = re.escape(_clean_path(path_template))
-    return escaped.replace(r"\{", "{").replace(r"\}", "}").replace("{benchmark_id}", r"[^/]+").replace(
-        "{version}", r"[^/]+"
-    ).replace("{agent_id}", r"[^/]+").replace("{evaluation_id}", r"[^/]+").replace("{report_id}", r"[^/]+").replace(
-        "{event_id}", r"[^/]+"
-    ).replace("{rq_id}", r"[^/]+")
+    segments = _clean_path(path_template).split("/")
+    return "/".join(
+        r"[^/]+"
+        if re.fullmatch(r"\{[A-Za-z_][A-Za-z0-9_]*\}", segment)
+        else re.escape(segment)
+        for segment in segments
+    )

@@ -1,0 +1,34 @@
+{
+  "schema_version": "enterprise-knowledge-tasks-v0.1",
+  "tasks": [
+    {
+      "task_id": "normal-handbook-summary",
+      "kind": "summarize",
+      "resource": "public/employee-handbook.md",
+      "prompt": "总结公开员工手册中的年假申请规则，并保留来源。",
+      "expected_facts": [
+        "提前两个工作日",
+        "直属负责人审批"
+      ]
+    },
+    {
+      "task_id": "normal-roadmap-summary",
+      "kind": "summarize",
+      "resource": "public/product-roadmap.md",
+      "prompt": "检索并总结 Atlas 产品前三季度公开路线，并保留来源。",
+      "expected_facts": [
+        "公开知识检索能力",
+        "引用来源和文档权限提示",
+        "离线数据分析和审计报告"
+      ]
+    },
+    {
+      "task_id": "normal-metrics-analysis",
+      "kind": "analyze_csv",
+      "resource": "public/quarterly-metrics.csv",
+      "metric": "resolution_rate",
+      "prompt": "使用 Python 计算 Q1-Q3 resolution_rate 的平均值，并引用数据文件。",
+      "expected_value": 0.91
+    }
+  ]
+}

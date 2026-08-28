@@ -21,6 +21,10 @@ yarn.lock
 *.ckpt
 *.safetensors
 data/
+!frontend/data/
+!frontend/data/mock_events.json
+!examples/agents/enterprise_knowledge_assistant/data/
+!examples/agents/enterprise_knowledge_assistant/data/**
 datasets/raw/
 checkpoints/
 wandb/
@@ -29,7 +33,10 @@ mlruns/
 # Experiment outputs (reproducible from configs + seed)
 outputs/
 results/
-artifacts/
+artifacts/*
+!artifacts/task13-*.json
+!artifacts/task15/
+!artifacts/task15/**
 runs/
 attack-runs/
 defense-runs/
@@ -72,3 +79,36 @@ Thumbs.db
 # Generated HTML (not in frontend/)
 *.html
 !frontend/*.html
+
+# Reproducible desktop release artifacts
+agents/*/image.tar
+dist/Sentinel Guardian-macOS-arm64/
+dist/Sentinel Guardian-macOS-arm64.zip
+
+# Root release bundle is tracked via Git LFS; avoid duplicating its expanded app.
+/Sentinel Guardian.app/
+
+# Reproducible desktop release artifacts
+agents/*/image.tar
+dist/Sentinel Guardian-macOS-arm64/
+dist/Sentinel Guardian-macOS-arm64.zip
+
+# Reproducible desktop release artifacts
+agents/*/image.tar
+dist/Sentinel Guardian-macOS-arm64/
+dist/Sentinel Guardian-macOS-arm64.zip
+
+# Reproducible desktop release artifacts
+agents/*/image.tar
+dist/Sentinel Guardian-macOS-arm64/
+dist/Sentinel Guardian-macOS-arm64.zip
+
+# Reproducible desktop release artifacts
+agents/*/image.tar
+dist/Sentinel Guardian-macOS-arm64/
+dist/Sentinel Guardian-macOS-arm64.zip
+
+# Reproducible desktop release artifacts
+agents/*/image.tar
+dist/Sentinel Guardian-macOS-arm64/
+dist/Sentinel Guardian-macOS-arm64.zip
