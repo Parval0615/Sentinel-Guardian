@@ -35,9 +35,12 @@ from redsentinel.attacks.engine.llm_client import SharedLLMClient
 from redsentinel.core.agent_security import AgentProfile
 from redsentinel.attacks.engine.threat_taxonomy import (
     THREAT_CATEGORIES,
+    PIPELINE_NODES,
     AttackStrategy,
     SyntheticTarget,
     ladder_for,
+    nodes_for_risk_type,
+    nodes_for_threat_category,
 )
 
 if TYPE_CHECKING:
@@ -69,6 +72,8 @@ class AttackAttempt:
     node_type: str | None = None
     attack_source: str | None = None
     profile_source: str | None = None
+    # payload_source: 标注 payload 来源（internal / agentdojo / injecagent / agentharm）
+    payload_source: str = "internal"
     success_criteria: list[str] = field(default_factory=list)
     attack_metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -111,6 +116,37 @@ class CampaignResult:
     @property
     def coverage_rate(self) -> float:
         return self.coverage_count / len(THREAT_CATEGORIES)
+
+    @property
+    def node_coverage(self) -> dict[str, Any]:
+        """按 N1-N8 节点统计攻击覆盖情况，用于 benchmark 对齐评分。"""
+        node_attempts: dict[str, int] = {n: 0 for n in PIPELINE_NODES}
+        node_breached: dict[str, int] = {n: 0 for n in PIPELINE_NODES}
+        for attempt in self.attempts:
+            # 优先取 spec 写入的精确节点；回退时先按 risk_type 查，再按威胁类别查（覆盖
+            # kb_poisoning / sensitive_leakage 等通用战役类别名）
+            nodes = (
+                attempt.attack_metadata.get("pipeline_nodes")
+                or nodes_for_risk_type(attempt.category)
+                or nodes_for_threat_category(attempt.category)
+            )
+            for node in nodes:
+                if node in node_attempts:
+                    node_attempts[node] += 1
+                    if attempt.success:
+                        node_breached[node] += 1
+        result: dict[str, Any] = {}
+        for node, label in PIPELINE_NODES.items():
+            total = node_attempts[node]
+            breached = node_breached[node]
+            result[node] = {
+                "label": label,
+                "total_attempts": total,
+                "breached": breached,
+                "asr": round(breached / total, 4) if total > 0 else None,
+                "security_score": round(1 - breached / total, 4) if total > 0 else None,
+            }
+        return result
 
 
 class AttackAgent:
@@ -259,6 +295,7 @@ class AttackAgent:
                 success=response.success,
                 blocked=response.blocked,
                 target_reason=response.reason,
+                payload_source=strategy.payload_source,
             )
 
             if response.success:
@@ -319,7 +356,12 @@ class AttackAgent:
                 attack_source=str(spec.metadata.get("source") or ""),
                 profile_source=spec.metadata.get("profile_source"),
                 success_criteria=list(spec.success_criteria),
-                attack_metadata=dict(spec.metadata),
+                attack_metadata={
+                    **spec.metadata,
+                    "pipeline_nodes": list(spec.pipeline_nodes),
+                    "benchmark_source": spec.benchmark_source,
+                },
+                payload_source=spec.payload_source,
             )
             self.attempts.append(attempt)
             if response.success:

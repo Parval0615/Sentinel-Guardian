@@ -39,6 +39,12 @@ class AttackSpec(BaseModel):
     label: str = Field(min_length=1)
     goal: str = Field(min_length=1)
     success_criteria: list[str] = Field(min_length=1)
+    # pipeline_nodes: 此攻击对应的 Agent 流水线节点（N1-N8），空列表表示未映射
+    pipeline_nodes: list[str] = Field(default_factory=list)
+    # benchmark_source: 关联的 benchmark 名称（agentdojo / injecagent / agentharm 等）
+    benchmark_source: str | None = None
+    # payload_source: payload 来源（internal / agentdojo / injecagent / agentharm）
+    payload_source: str = "internal"
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -53,6 +59,8 @@ class ScenarioPairRecord(BaseModel):
     seed: int
     framework: AgentFramework
     controlled_label: str = Field(min_length=1)
+    # pipeline_nodes: 此场景对应的流水线节点（N1-N8）
+    pipeline_nodes: list[str] = Field(default_factory=list)
 
 
 class ScenarioManifest(BaseModel):
