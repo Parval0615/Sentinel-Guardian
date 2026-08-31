@@ -20,7 +20,7 @@ DEFAULT_PORT = 8765
 
 
 def main() -> None:
-    support_root = Path.home() / "Library" / "Application Support" / APP_NAME
+    support_root = _support_root()
     support_root.mkdir(parents=True, exist_ok=True)
     _configure_logging(support_root / "app.log")
 
@@ -58,14 +58,24 @@ def main() -> None:
         server_thread.join(timeout=5)
 
 
+def _support_root() -> Path:
+    if sys.platform == "win32":
+        local_app_data = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
+        return Path(local_app_data) / APP_NAME
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / APP_NAME
+    return Path.home() / ".local" / "share" / APP_NAME
+
+
 def _resource_root() -> Path:
     if getattr(sys, "frozen", False):
-        resources = Path(sys.executable).resolve().parents[1] / "Resources"
-        if resources.is_dir():
-            return resources
-    bundled = getattr(sys, "_MEIPASS", None)
-    if bundled:
-        return Path(bundled).resolve()
+        if sys.platform == "darwin":
+            resources = Path(sys.executable).resolve().parents[1] / "Resources"
+            if resources.is_dir():
+                return resources
+        bundled = getattr(sys, "_MEIPASS", None)
+        if bundled:
+            return Path(bundled).resolve()
     return Path(__file__).resolve().parents[3]
 
 
@@ -131,11 +141,20 @@ def _show_window(port: int, support_root: Path) -> None:
         height=820,
         min_size=(960, 640),
     )
+    gui = _webview_gui()
     webview.start(
-        gui="cocoa",
+        gui=gui,
         private_mode=False,
         storage_path=str(support_root / "webview"),
     )
+
+
+def _webview_gui() -> str:
+    if sys.platform == "win32":
+        return "edgechromium"
+    if sys.platform == "darwin":
+        return "cocoa"
+    return "gtk"
 
 
 def _configure_logging(path: Path) -> None:

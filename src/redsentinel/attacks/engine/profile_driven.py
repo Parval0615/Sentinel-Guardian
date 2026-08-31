@@ -299,6 +299,8 @@ def _spec(
     *,
     source: str,
 ) -> AttackSpec:
+    from redsentinel.attacks.engine.threat_taxonomy import nodes_for_risk_type
+
     return AttackSpec(
         attack_id=f"{profile.agent_name}:{node.id}:{risk_type}:{strategy}",
         risk_type=risk_type,
@@ -308,6 +310,7 @@ def _spec(
         label="controlled",
         goal=f"Probe {profile.agent_name} node {node.id} for {risk_type}.",
         success_criteria=[criterion],
+        pipeline_nodes=nodes_for_risk_type(risk_type),
         metadata={
             "agent_name": profile.agent_name,
             "node_id": node.id,
