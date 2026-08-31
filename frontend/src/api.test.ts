@@ -326,7 +326,7 @@ describe('typed API client', () => {
     )
 
     await expect(loadAuditDetail('audit-1')).rejects.toThrow(
-      '已完成审计缺少 Baseline 或 Guarded 报告',
+      '已完成审计缺少防护前或防护后报告',
     )
   })
 

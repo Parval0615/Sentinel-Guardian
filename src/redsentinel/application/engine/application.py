@@ -244,6 +244,7 @@ class ProductApplicationService:
                 legacy,
                 planner=planner,
                 defense_gateway=defense_gateway,
+                image_profiles=self.image_profiles,
             )
         )
         self.supervision = SupervisionEventStore(storage=self.storage)

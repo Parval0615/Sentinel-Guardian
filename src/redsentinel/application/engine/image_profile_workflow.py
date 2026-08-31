@@ -252,13 +252,14 @@ class ImageProfileWorkflowService:
                         status = status.model_copy(update={"status": "partial"})
                 except Exception as exc:
                     status = self._mark_failed(status, stage, exc)
-                    self._write_status(tenant_id, agent_id, suffix, status)
                     if stage not in _NON_FATAL_STAGES:
                         self._sync_agent_failure(tenant_id, agent_id, status)
-                        return status
+                        break
                     context[stage] = {"error": _safe_error(exc)}
-                self._write_status(tenant_id, agent_id, suffix, status)
-            return status
+                if stage != "finalize":
+                    self._write_status(tenant_id, agent_id, suffix, status)
+        self._write_status(tenant_id, agent_id, suffix, status)
+        return status
 
     def retry(self, *, tenant_id: str, agent_id: str, analysis_id: str) -> ImageAnalysisStatus:
         status = self.get_status(tenant_id=tenant_id, agent_id=agent_id, analysis_id=analysis_id)
@@ -738,6 +739,10 @@ class ImageProfileWorkflowService:
             return
         agent = AgentRegistration.model_validate(self.storage.read_json(path))
         framework = ", ".join(item.name for item in profile.frameworks) or "unknown"
+        detected_openmanus = any(
+            "openmanus" in f"{item.framework_id} {item.name}".casefold()
+            for item in profile.frameworks
+        )
         data_boundary = {
             **agent.data_boundary,
             "image_digest": profile.image.digest,
@@ -749,6 +754,11 @@ class ImageProfileWorkflowService:
         updated = agent.model_copy(
             update={
                 "framework": framework,
+                "adapter_type": (
+                    "openmanus"
+                    if detected_openmanus
+                    else agent.adapter_type
+                ),
                 "status": "ready",
                 "data_boundary": data_boundary,
             }

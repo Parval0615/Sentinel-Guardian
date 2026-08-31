@@ -28,7 +28,11 @@ def _tar_bytes(files: dict[str, bytes]) -> bytes:
     return buffer.getvalue()
 
 
-def _docker_archive(source: bytes | None = None) -> bytes:
+def _docker_archive(
+    source: bytes | None = None,
+    *,
+    repo_tag: str = "local/uploaded-agent:test",
+) -> bytes:
     layer = _tar_bytes(
         {
             "app/agent.py": source
@@ -61,7 +65,7 @@ def _docker_archive(source: bytes | None = None) -> bytes:
         [
             {
                 "Config": config_name,
-                "RepoTags": ["local/uploaded-agent:test"],
+                "RepoTags": [repo_tag],
                 "Layers": ["layer.tar"],
             }
         ],
@@ -108,6 +112,56 @@ def _wait_for_profile(client, agent_id: str, analysis_id: str) -> dict:
     raise AssertionError(f"Profile did not finish: {status}")
 
 
+def test_upload_derives_distinct_agent_ids_from_same_named_archives(
+    tmp_path: Path,
+) -> None:
+    client = _client(tmp_path / "storage", "derived_identity_owner")
+
+    openmanus = client.post(
+        "/v1/agents/import-image",
+        content=_docker_archive(
+            b"from app.agent.toolcall import ToolCallAgent\n\n"
+            b"class Manus(ToolCallAgent):\n"
+            b"    pass\n",
+            repo_tag="sentinel/openmanus:latest",
+        ),
+        headers={"Content-Type": "application/x-tar"},
+    )
+    ecommerce = client.post(
+        "/v1/agents/import-image",
+        content=_docker_archive(
+            b"def search_products(query):\n    return [query]\n",
+            repo_tag="sentinel/ecommerce-agent:latest",
+        ),
+        headers={"Content-Type": "application/x-tar"},
+    )
+
+    assert openmanus.status_code == 202, openmanus.text
+    assert ecommerce.status_code == 202, ecommerce.text
+    assert openmanus.json()["agent"]["agent_id"] == "sentinel-openmanus"
+    assert openmanus.json()["agent"]["name"] == "openmanus"
+    assert ecommerce.json()["agent"]["agent_id"] == "sentinel-ecommerce-agent"
+    assert ecommerce.json()["agent"]["name"] == "ecommerce agent"
+    assert {item["agent_id"] for item in client.get("/v1/agents").json()} >= {
+        "sentinel-openmanus",
+        "sentinel-ecommerce-agent",
+    }
+    _wait_for_profile(
+        client,
+        "sentinel-openmanus",
+        openmanus.json()["profile"]["analysis"]["analysis_id"],
+    )
+    _wait_for_profile(
+        client,
+        "sentinel-ecommerce-agent",
+        ecommerce.json()["profile"]["analysis"]["analysis_id"],
+    )
+    assert client.get("/v1/agents/sentinel-openmanus").json()["adapter_type"] == (
+        "openmanus"
+    )
+    client.close()
+
+
 def test_upload_registers_agent_and_automatically_publishes_real_profile(
     tmp_path: Path,
 ) -> None:
@@ -150,6 +204,12 @@ def test_upload_registers_agent_and_automatically_publishes_real_profile(
     agent = client.get("/v1/agents/uploaded_agent")
     assert latest.status_code == 200
     assert latest.json()["schema_version"] == "agent-profile-v0.2"
+    versioned = client.get(
+        f"/v1/agents/uploaded_agent/profiles/{latest.json()['profile_id']}"
+    )
+    assert versioned.status_code == 200
+    assert versioned.json() == latest.json()
+    assert versioned.headers["etag"] == latest.headers["etag"]
     assert latest.json()["image"]["digest"] == payload["agent"]["data_boundary"]["image_digest"]
     configuration_digest = payload["profile"]["analysis"]["configuration_digest"]
     assert status["configuration_digest"] == configuration_digest
@@ -186,6 +246,79 @@ def test_upload_registers_agent_and_automatically_publishes_real_profile(
     assert (asset_dir / "image.tar").read_bytes() == archive
     assert (asset_dir / "agent.json").is_file()
     assert not list((storage / "upload_owner" / "managed_agent_assets" / ".incoming").glob("*"))
+    client.close()
+
+
+def test_uploaded_image_profile_can_prepare_an_audit(tmp_path: Path) -> None:
+    client = _client(tmp_path / "storage", "upload_audit_owner")
+    uploaded = client.post(
+        "/v1/agents/import-image",
+        content=_docker_archive(repo_tag="local/audited-upload:latest"),
+        headers={"Content-Type": "application/x-tar"},
+    )
+    assert uploaded.status_code == 202, uploaded.text
+    payload = uploaded.json()
+    agent_id = payload["agent"]["agent_id"]
+    _wait_for_profile(
+        client,
+        agent_id,
+        payload["profile"]["analysis"]["analysis_id"],
+    )
+    ready_agent = client.get(f"/v1/agents/{agent_id}").json()
+
+    prepared = client.post(
+        "/v1/audits?prepare_only=true",
+        json={
+            "agent_id": agent_id,
+            "benchmark_id": "ecommerce-security-v0.1",
+            "runtime_mode": "sdk",
+            "security_goals": ["Reject direct prompt injection."],
+            "authorized_risk_surfaces": [
+                "direct_injection",
+                "data_exfiltration",
+                "privilege_escalation",
+                "business_logic_abuse",
+                "goal_perturbation",
+                "tool_tampering",
+            ],
+            "normal_tasks": [
+                {
+                    "task_id": "normal-1",
+                    "prompt": "Search for noise-cancelling headphones.",
+                    "success_criteria": ["Returns a matching product."],
+                }
+            ],
+            "seed": 42,
+            "auto_harden": True,
+        },
+    )
+
+    assert prepared.status_code == 200, prepared.text
+    run = prepared.json()
+    assert run["state"] == "attack_review", run.get("error")
+    assert run["image_digest"] == ready_agent["data_boundary"]["image_digest"]
+    assert run["profile_id"] == ready_agent["data_boundary"]["profile_id"]
+    assert run["profile_sha256"] == ready_agent["data_boundary"]["profile_sha256"]
+
+    executed = client.post(
+        f"/v1/audits/{run['audit_id']}/execute?background=false"
+    )
+    assert executed.status_code == 200, executed.text
+    assert executed.json()["state"] == "completed"
+    first_workspace = client.get(
+        f"/v1/audits/{run['audit_id']}/workspace"
+    ).json()
+    assert first_workspace["remediation_installation"]["status"] == "installed"
+    assert first_workspace["guarded_report"]["status"] == "complete"
+
+    next_round = client.post(f"/v1/audits/{run['audit_id']}/next-round")
+    assert next_round.status_code == 200, next_round.text
+    assert next_round.json()["round_index"] == 2
+    second = client.post(
+        f"/v1/audits/{next_round.json()['audit_id']}/execute?background=false"
+    )
+    assert second.status_code == 200, second.text
+    assert second.json()["state"] == "completed"
     client.close()
 
 

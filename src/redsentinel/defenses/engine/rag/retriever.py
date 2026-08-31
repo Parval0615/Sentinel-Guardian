@@ -1,10 +1,54 @@
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain_community.retrievers import BM25Retriever
-from redsentinel.defenses.engine.config import *
 import os
+import re
 import shutil
+from html.parser import HTMLParser
+from pathlib import Path
+
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from rank_bm25 import BM25Okapi
+
+from redsentinel.defenses.engine.config import *
+
+
+class _TextOnlyHTMLParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.parts: list[str] = []
+
+    def handle_data(self, data: str) -> None:
+        text = data.strip()
+        if text:
+            self.parts.append(text)
+
+
+class _BM25Retriever:
+    def __init__(self, documents) -> None:
+        self.documents = list(documents)
+        self.k = 4
+        self._index = BM25Okapi(
+            [document.page_content.split() for document in self.documents]
+        )
+
+    @classmethod
+    def from_documents(cls, documents):
+        return cls(documents)
+
+    def invoke(self, query: str):
+        query_tokens = query.split()
+        scores = self._index.get_scores(query_tokens)
+        query_terms = set(query_tokens)
+        ranked = sorted(
+            enumerate(scores),
+            key=lambda item: (
+                -item[1],
+                -len(query_terms & set(self.documents[item[0]].page_content.split())),
+                item[0],
+            ),
+        )
+        return [self.documents[index] for index, _score in ranked[: self.k]]
 
 # ===================== 重排序模型配置 =====================
 RERANK_MODEL_PATH = "BAAI/bge-reranker-base"
@@ -246,24 +290,44 @@ def _detect_format(path: str) -> str:
 def _load_document(path: str, fmt: str):
     """Load document based on detected format."""
     if fmt == "pdf":
-        from langchain_community.document_loaders import PyMuPDFLoader
-        return PyMuPDFLoader(path).load()
+        import fitz
+
+        pdf = fitz.open(path)
+        try:
+            return [
+                Document(
+                    page_content=page.get_text(),
+                    metadata={"source": path, "page": page.number},
+                )
+                for page in pdf
+            ]
+        finally:
+            pdf.close()
     if fmt == "html":
-        from langchain_community.document_loaders import BSHTMLLoader
-        return BSHTMLLoader(path, open_encoding="utf-8").load()
+        parser = _TextOnlyHTMLParser()
+        parser.feed(Path(path).read_text(encoding="utf-8", errors="replace"))
+        return [
+            Document(
+                page_content="\n".join(parser.parts),
+                metadata={"source": path, "page": 0},
+            )
+        ]
     if fmt == "markdown":
-        import re as _re
-        from langchain_community.document_loaders import TextLoader
-        raw = TextLoader(path, encoding="utf-8").load()
-        # Strip HTML tags from markdown (keep text content)
-        for doc in raw:
-            doc.page_content = _re.sub(r"<[^>]+>", "", doc.page_content)
-        return raw
+        content = Path(path).read_text(encoding="utf-8", errors="replace")
+        return [
+            Document(
+                page_content=re.sub(r"<[^>]+>", "", content),
+                metadata={"source": path, "page": 0},
+            )
+        ]
     if fmt == "email":
         return _load_email_document(path)
-    # Fallback: treat as text
-    from langchain_community.document_loaders import TextLoader
-    return TextLoader(path, encoding="utf-8").load()
+    return [
+        Document(
+            page_content=Path(path).read_text(encoding="utf-8", errors="replace"),
+            metadata={"source": path, "page": 0},
+        )
+    ]
 
 
 def _load_email_document(path: str):
@@ -446,7 +510,7 @@ def init_rag_retriever(pdf_path: str = None, force_reindex: bool = False,
         search_kwargs={"k": _vec_top_k, "fetch_k": max(_vec_top_k * 3, 10), "lambda_mult": 0.7}
     )
 
-    bm25_retriever = BM25Retriever.from_documents(splits)
+    bm25_retriever = _BM25Retriever.from_documents(splits)
     bm25_retriever.k = _vec_top_k
 
     return {
@@ -492,11 +556,11 @@ def rag_query(retriever_dict, query: str,
             scores = {}
             doc_map = {}
             for rank, doc in enumerate(vec_docs):
-                doc_id = f"{doc.metadata['page']}_{doc.page_content[:50]}"
+                doc_id = f"{doc.metadata.get('page', 0)}_{doc.page_content[:50]}"
                 scores[doc_id] = scores.get(doc_id, 0) + 1.0 / (k + rank + 1)
                 doc_map[doc_id] = doc
             for rank, doc in enumerate(bm25_docs):
-                doc_id = f"{doc.metadata['page']}_{doc.page_content[:50]}"
+                doc_id = f"{doc.metadata.get('page', 0)}_{doc.page_content[:50]}"
                 scores[doc_id] = scores.get(doc_id, 0) + 1.0 / (k + rank + 1)
                 doc_map[doc_id] = doc
             return [doc_map[did] for did, _ in sorted(scores.items(), key=lambda x: x[1], reverse=True)]

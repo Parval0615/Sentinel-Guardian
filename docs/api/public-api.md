@@ -13,12 +13,14 @@ The allowlist covers:
 
 ## Image-backed Agent profile API
 
-The desktop product discovers assets only from the configured
-`RED_SENTINEL_AGENT_ROOT` (the packaged launcher sets this to the `agents/`
-directory beside the `.app`). All routes below require a bearer token:
+The desktop product accepts tenant-owned Docker archives through the upload API
+and can also discover assets from `RED_SENTINEL_AGENT_ROOT` (the packaged
+launcher sets this to the `agents/` directory beside the `.app`). All routes
+below require a bearer token:
 
 | Method | Path | Result |
 |---|---|---|
+| `POST` | `/v1/agents/import-image` | Persist a Docker archive, derive its identity, register the Agent, and queue profile generation |
 | `GET` | `/v1/agents` | Refresh and list valid directory-backed Agents |
 | `GET` | `/v1/agents/index-errors` | List isolated descriptor/image indexing errors |
 | `POST` | `/v1/agents/{agent_id}/profiles` | Queue or reuse an image- and configuration-bound eight-stage analysis |
@@ -48,6 +50,9 @@ text and sensitive runtime configuration, and the planner converts its eligible
 risk paths into AttackSpec records. Audit create and resume operations for
 image-backed Agents validate the complete `image_digest`, `profile_id`, and
 `profile_sha256` binding; partial bindings and version drift are rejected.
+Profile publication upgrades an automatically detected OpenManus image to the
+`openmanus` adapter. Other uploaded Docker assets use the Sentinel-managed SDK
+experiment runner unless a dedicated runtime adapter is connected.
 
 ## OpenManus white-box audit loop
 

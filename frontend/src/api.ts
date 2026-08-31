@@ -84,11 +84,11 @@ export const api = {
     onProgress: (percent: number) => void,
   ) => new Promise<AgentImageImportResult>((resolve, reject) => {
     const params = new URLSearchParams({
-      agent_id: input.agentId,
-      name: input.name,
       domain: input.domain,
       expected_frameworks: input.expectedFrameworks.join(','),
     })
+    if (input.agentId) params.set('agent_id', input.agentId)
+    if (input.name) params.set('name', input.name)
     const probeModule = input.probeModule?.trim()
     if (probeModule) params.set('probe_module', probeModule)
     const xhr = new XMLHttpRequest()
@@ -197,7 +197,7 @@ export async function loadAuditDetail(id: string): Promise<AuditDetail> {
         })),
     ])
   if (!workspace.baseline_report || !workspace.guarded_report) {
-    throw new Error('已完成审计缺少 Baseline 或 Guarded 报告')
+    throw new Error('已完成审计缺少防护前或防护后报告')
   }
   if (!workspace.decision) {
     throw new Error('已完成审计缺少正式决策')

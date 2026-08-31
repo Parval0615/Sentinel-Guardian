@@ -32,8 +32,9 @@ product = [
 ]
 defense = [
   "langchain",
-  "langchain-community",
+  "langchain-chroma>=1.1",
   "langchain-core",
+  "langchain-huggingface>=1.2",
   "langchain-openai",
   "langchain-text-splitters",
   "langgraph",
@@ -55,6 +56,7 @@ attack = [
 dev = [
   "pytest",
   "ruff",
+  "httpx2>=2.12",
   "jsonschema>=4",
   "tomli>=2; python_version<'3.11'",
 ]

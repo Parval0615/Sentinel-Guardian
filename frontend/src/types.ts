@@ -247,8 +247,8 @@ export interface AgentImageImportResult {
 
 export interface AgentImageUploadInput {
   file: File
-  agentId: string
-  name: string
+  agentId?: string
+  name?: string
   domain: string
   expectedFrameworks: string[]
   probeModule?: string
@@ -473,8 +473,16 @@ export interface RemediationBundle {
 
 export interface RemediationInstallation {
   installation_id: string
+  audit_id: string
+  bundle_id: string
+  bundle_sha256: string
+  target_environment: 'audit_sandbox'
   status: 'installed'
+  policy_ref: string
+  policy_sha256: string
   active_guards: string[]
+  installed_action_ids: string[]
+  installed_at: string
 }
 
 export interface AuditTraceEvent {

@@ -10,6 +10,8 @@ def test_product_openapi_contract_covers_hosted_api_surface() -> None:
     assert {
         "/v1/agents/onboard",
         "/v1/agents",
+        "/v1/agents/import-image",
+        "/v1/agents/{agent_id}/profiles/{profile_id}",
         "/v1/agents/{agent_id}/sessions",
         "/v1/evaluations",
         "/v1/evaluations/{evaluation_id}",
@@ -26,6 +28,7 @@ def test_product_openapi_contract_covers_hosted_api_surface() -> None:
         "/v1/audits/{audit_id}/decision",
         "/v1/audits/{audit_id}/workspace",
         "/v1/audits/{audit_id}/resume",
+        "/v1/audits/{audit_id}/next-round",
     } <= set(spec["paths"])
 
     schemas = spec["components"]["schemas"]
@@ -34,6 +37,7 @@ def test_product_openapi_contract_covers_hosted_api_surface() -> None:
         "AgentOnboardingResponse",
         "AgentMaterial",
         "AgentRegistration",
+        "AgentImageImportResult",
         "EvaluationRequest",
         "EvaluationStatus",
         "AgentSecurityReport",
@@ -72,21 +76,9 @@ def test_product_openapi_contract_covers_hosted_api_surface() -> None:
     ] == "source"
     assert "build_manifest_path" in schemas["AgentOnboardingRequest"]["required"]
     assert "source_snapshot_sha256" in schemas["AuditRun"]["required"]
-    assert schemas["AgentOnboardingRequest"]["properties"]["integration_type"][
-        "const"
-    ] == "source"
-    assert "build_manifest_path" in schemas["AgentOnboardingRequest"]["required"]
-    assert "source_snapshot_sha256" in schemas["AuditRun"]["required"]
-    assert schemas["AgentOnboardingRequest"]["properties"]["integration_type"][
-        "const"
-    ] == "source"
-    assert "build_manifest_path" in schemas["AgentOnboardingRequest"]["required"]
-    assert "source_snapshot_sha256" in schemas["AuditRun"]["required"]
-    assert schemas["AgentOnboardingRequest"]["properties"]["integration_type"][
-        "const"
-    ] == "source"
-    assert "build_manifest_path" in schemas["AgentOnboardingRequest"]["required"]
-    assert "source_snapshot_sha256" in schemas["AuditRun"]["required"]
+    assert "openmanus" in schemas["AgentRegistration"]["properties"]["adapter_type"][
+        "enum"
+    ]
     assert "dashboard_path" in schemas["ReportArtifacts"]["properties"]
     assert "audit_refs" in schemas["ReportArtifacts"]["properties"]
     assert "trust_level" in schemas["ProfileEvidenceItem"]["required"]

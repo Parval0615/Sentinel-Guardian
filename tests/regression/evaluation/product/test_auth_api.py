@@ -136,6 +136,7 @@ def test_auth_logout_confirms_valid_session_and_malformed_authorization_is_400(t
     )
 
     logout = client.post("/v1/auth/logout", headers=_auth_header(login.json()["access_token"]))
+    invalidated = client.get("/v1/auth/me", headers=_auth_header(login.json()["access_token"]))
     malformed = client.get("/v1/auth/me", headers={"Authorization": "Token not-a-bearer-token"})
 
     assert logout.status_code == 200
@@ -144,6 +145,7 @@ def test_auth_logout_confirms_valid_session_and_malformed_authorization_is_400(t
         "success": True,
         "message": "Logged out.",
     }
+    _assert_auth_error(invalidated, 401, "token_invalid")
     _assert_auth_error(malformed, 400, "invalid_auth_request")
 
 

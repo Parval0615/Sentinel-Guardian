@@ -149,6 +149,7 @@ class AuthUserRecord(BaseModel):
     last_login_at: str | None = None
     status: AuthUserStatus = "active"
     role: AuthUserRole = "user"
+    token_version: int = Field(default=0, ge=0)
 
 
 class AgentLibraryEntry(BaseModel):

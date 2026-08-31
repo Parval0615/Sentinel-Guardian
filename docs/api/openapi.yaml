@@ -42,6 +42,51 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AgentRegistration"
+  /v1/agents/import-image:
+    post:
+      summary: Upload a Docker archive and start profile generation
+      operationId: importAgentImage
+      parameters:
+        - name: agent_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: domain
+          in: query
+          required: false
+          schema:
+            type: string
+            default: general
+        - name: probe_module
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: expected_frameworks
+          in: query
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/x-tar:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "202":
+          description: Registered Agent and queued profile analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentImageImportResult"
   /v1/agents/index-errors:
     get:
       summary: List isolated Agent directory indexing errors
@@ -656,6 +701,17 @@ components:
           $ref: "#/components/schemas/ImageAnalysisStatus"
         cached:
           type: boolean
+    AgentImageImportResult:
+      type: object
+      required: [schema_version, agent, profile]
+      properties:
+        schema_version:
+          type: string
+          const: agent-image-import-response-v0.1
+        agent:
+          $ref: "#/components/schemas/AgentRegistration"
+        profile:
+          $ref: "#/components/schemas/ImageProfileCreation"
     ImageIdentity:
       allOf:
         - $ref: "#/components/schemas/ProfileClaim"
@@ -1711,7 +1767,7 @@ components:
           default: sdk
         adapter_type:
           type: string
-          enum: [ecommerce_demo, external_sdk, http_endpoint]
+          enum: [ecommerce_demo, external_sdk, http_endpoint, openmanus]
           default: ecommerce_demo
         endpoint_url:
           type: [string, "null"]

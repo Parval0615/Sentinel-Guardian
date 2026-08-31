@@ -33,6 +33,9 @@ DIGEST_PATTERN = re.compile(r"^sha256:[0-9a-f]{64}$")
 PYTHON_MODULE_PATTERN = re.compile(
     r"^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*$"
 )
+PROJECT_VERSION_PATTERN = re.compile(
+    r'(?ms)^\[project\]\s*$.*?^version\s*=\s*"([0-9]+(?:\.[0-9]+){1,2})"\s*$'
+)
 
 
 class PackagingError(RuntimeError):
@@ -442,7 +445,32 @@ def sync_frontend(repo_root: Path, app_path: Path) -> None:
     shutil.copytree(source, target)
 
 
-def validate_info_plist(app_path: Path) -> None:
+def read_project_version(repo_root: Path) -> str:
+    pyproject_path = repo_root / "pyproject.toml"
+    try:
+        content = pyproject_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise PackagingError(f"无法读取项目版本: {pyproject_path}") from exc
+    match = PROJECT_VERSION_PATTERN.search(content)
+    if match is None:
+        raise PackagingError("pyproject.toml 缺少有效的 [project].version")
+    return match.group(1)
+
+
+def write_bundle_version(app_path: Path, version: str) -> None:
+    plist_path = app_path / "Contents" / "Info.plist"
+    try:
+        with plist_path.open("rb") as stream:
+            payload = plistlib.load(stream)
+        payload["CFBundleShortVersionString"] = version
+        payload["CFBundleVersion"] = version
+        with plist_path.open("wb") as stream:
+            plistlib.dump(payload, stream)
+    except (OSError, plistlib.InvalidFileException) as exc:
+        raise PackagingError(f"无法写入应用版本: {plist_path}") from exc
+
+
+def validate_info_plist(app_path: Path, *, expected_version: str | None = None) -> None:
     plist_path = app_path / "Contents" / "Info.plist"
     try:
         with plist_path.open("rb") as stream:
@@ -454,6 +482,9 @@ def validate_info_plist(app_path: Path) -> None:
         "CFBundleIdentifier": EXPECTED_BUNDLE_ID,
         "CFBundlePackageType": "APPL",
     }
+    if expected_version is not None:
+        expected["CFBundleShortVersionString"] = expected_version
+        expected["CFBundleVersion"] = expected_version
     for key, value in expected.items():
         if payload.get(key) != value:
             raise PackagingError(
@@ -610,6 +641,7 @@ def package_release(args: argparse.Namespace) -> tuple[Path, Path]:
     )
     zip_temporary = zip_path.with_name(f".{zip_path.name}.tmp-{uuid.uuid4().hex}")
     try:
+        project_version = read_project_version(repo_root)
         run(["ditto", str(app_source), str(staging_app)], cwd=repo_root)
         resources = staging_app / "Contents" / "Resources"
         embedded_agents = resources / "my-agents"
@@ -621,6 +653,7 @@ def package_release(args: argparse.Namespace) -> tuple[Path, Path]:
         if embedded_agents_link.is_symlink():
             embedded_agents_link.unlink()
         sync_frontend(repo_root, staging_app)
+        write_bundle_version(staging_app, project_version)
         bundled_agents = resources / "agents"
         if bundled_agents.exists():
             shutil.rmtree(bundled_agents)
@@ -637,7 +670,7 @@ def package_release(args: argparse.Namespace) -> tuple[Path, Path]:
         ):
             raise PackagingError("应用内前端与本次构建产物哈希不一致")
 
-        validate_info_plist(staging_app)
+        validate_info_plist(staging_app, expected_version=project_version)
         validate_dynamic_probe_resource(staging_app)
         validate_macho_arm64(repo_root, staging_app)
         verify_required_images_in_release(repo_root, resources)

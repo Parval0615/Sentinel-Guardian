@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 import shutil
 import uuid
 from collections.abc import AsyncIterable
@@ -70,8 +71,8 @@ class AgentImageUploadService:
         *,
         tenant_id: str,
         username: str,
-        agent_id: str,
-        name: str,
+        agent_id: str | None,
+        name: str | None,
         domain: str,
         probe_module: str | None,
         expected_frameworks: list[str],
@@ -79,11 +80,7 @@ class AgentImageUploadService:
         content_length: int | None,
     ) -> AgentImageImportResult:
         safe_component(tenant_id, "tenant_id")
-        safe_component(agent_id, "agent_id")
-        name = name.strip()
         domain = domain.strip()
-        if not name:
-            raise AgentImageUploadError("agent_name_required", "Agent name is required.")
         if not domain:
             raise AgentImageUploadError("agent_domain_required", "Agent domain is required.")
         if content_length is not None and content_length > self.max_upload_bytes:
@@ -129,10 +126,17 @@ class AgentImageUploadService:
                     "docker_archive_invalid",
                     str(exc),
                 ) from exc
+            resolved_agent_id = agent_id.strip() if agent_id else _agent_id_from_repo_tag(
+                identity.repo_tag,
+            )
+            resolved_name = name.strip() if name else _agent_name_from_repo_tag(identity.repo_tag)
+            safe_component(resolved_agent_id, "agent_id")
+            if not resolved_name:
+                raise AgentImageUploadError("agent_name_required", "Agent name is required.")
 
             descriptor = AgentDirectoryDescriptor(
-                agent_id=agent_id,
-                name=name,
+                agent_id=resolved_agent_id,
+                name=resolved_name,
                 image=ImageReference(
                     type="docker_archive",
                     path="image.tar",
@@ -151,7 +155,7 @@ class AgentImageUploadService:
             suffix = image_digest.removeprefix("sha256:")[:16]
             final_directory = self.storage.managed_agent_asset_dir(
                 tenant_id,
-                agent_id,
+                resolved_agent_id,
                 suffix,
             )
             final_directory.parent.mkdir(parents=True, exist_ok=True)
@@ -175,7 +179,7 @@ class AgentImageUploadService:
             )
             profile = self.image_profiles.create(
                 tenant_id=tenant_id,
-                agent_id=agent_id,
+                agent_id=resolved_agent_id,
             )
             return AgentImageImportResult(agent=agent, profile=profile)
         finally:
@@ -190,6 +194,30 @@ def _normalized_frameworks(values: list[str]) -> list[str]:
         if item and item not in normalized:
             normalized.append(item)
     return normalized
+
+
+def _repository_from_repo_tag(repo_tag: str) -> str:
+    final_slash = repo_tag.rfind("/")
+    final_colon = repo_tag.rfind(":")
+    return repo_tag[:final_colon] if final_colon > final_slash else repo_tag
+
+
+def _agent_id_from_repo_tag(repo_tag: str) -> str:
+    repository = _repository_from_repo_tag(repo_tag).lower()
+    candidate = re.sub(r"[^a-z0-9_.-]+", "-", repository.replace("/", "-"))
+    candidate = candidate.strip(".-")[:80]
+    if not candidate:
+        raise AgentImageUploadError(
+            "agent_identity_unavailable",
+            "The Docker archive RepoTag cannot be converted to an Agent ID.",
+        )
+    return candidate
+
+
+def _agent_name_from_repo_tag(repo_tag: str) -> str:
+    repository = _repository_from_repo_tag(repo_tag)
+    leaf = repository.rsplit("/", 1)[-1]
+    return re.sub(r"[-_]+", " ", leaf).strip() or "Imported Agent"
 
 
 def _max_upload_bytes_from_environment() -> int:

@@ -14,6 +14,8 @@ build/
 node_modules/
 package-lock.json
 yarn.lock
+frontend/test-results/
+frontend/playwright-report/
 
 # ML / Data
 *.pt
@@ -85,30 +87,5 @@ agents/*/image.tar
 dist/Sentinel Guardian-macOS-arm64/
 dist/Sentinel Guardian-macOS-arm64.zip
 
-# Root release bundle is tracked via Git LFS; avoid duplicating its expanded app.
+# Root ZIP is tracked via Git LFS; the expanded app remains local.
 /Sentinel Guardian.app/
-
-# Reproducible desktop release artifacts
-agents/*/image.tar
-dist/Sentinel Guardian-macOS-arm64/
-dist/Sentinel Guardian-macOS-arm64.zip
-
-# Reproducible desktop release artifacts
-agents/*/image.tar
-dist/Sentinel Guardian-macOS-arm64/
-dist/Sentinel Guardian-macOS-arm64.zip
-
-# Reproducible desktop release artifacts
-agents/*/image.tar
-dist/Sentinel Guardian-macOS-arm64/
-dist/Sentinel Guardian-macOS-arm64.zip
-
-# Reproducible desktop release artifacts
-agents/*/image.tar
-dist/Sentinel Guardian-macOS-arm64/
-dist/Sentinel Guardian-macOS-arm64.zip
-
-# Reproducible desktop release artifacts
-agents/*/image.tar
-dist/Sentinel Guardian-macOS-arm64/
-dist/Sentinel Guardian-macOS-arm64.zip

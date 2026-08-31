@@ -8,6 +8,7 @@ from redsentinel.application.contracts import AgentRegistration
 from redsentinel.application.engine.app import (
     ECOMMERCE_DEMO_SOURCE_PATH,
     _ecommerce_demo_source_path,
+    _frontend_index_path,
     create_app,
 )
 from redsentinel.application.engine.llm_gateway import JsonLLMResult
@@ -350,7 +351,14 @@ def test_tenant_product_api_requires_authentication(tmp_path, method: str, path:
     assert response.json()["detail"]["schema_version"] == "auth-error-response-v0.1"
 
 
-def test_public_product_api_routes_remain_accessible_without_auth(tmp_path) -> None:
+def test_public_product_api_routes_remain_accessible_without_auth(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    frontend_index = tmp_path / "frontend" / "dist" / "index.html"
+    frontend_index.parent.mkdir(parents=True)
+    frontend_index.write_text("<!doctype html><title>Sentinel Guardian</title>", encoding="utf-8")
+    monkeypatch.setenv("RED_SENTINEL_FRONTEND_ROOT", str(tmp_path / "frontend"))
     client = _raw_client(tmp_path, raise_server_exceptions=False)
 
     assert client.get("/").status_code == 200
@@ -360,6 +368,18 @@ def test_public_product_api_routes_remain_accessible_without_auth(tmp_path) -> N
     assert client.get("/v1/benchmarks/ecommerce-security-v0.1/versions").status_code == 200
     assert client.get("/v1/benchmarks/ecommerce-security-v0.1/versions/v0.1").status_code == 200
     assert client.get("/assets/missing.js").status_code != 401
+
+
+def test_frontend_does_not_fall_back_to_legacy_static_shell(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    frontend_root = tmp_path / "frontend"
+    frontend_root.mkdir()
+    (frontend_root / "index.html").write_text("legacy", encoding="utf-8")
+    monkeypatch.setenv("RED_SENTINEL_FRONTEND_ROOT", str(frontend_root))
+
+    assert _frontend_index_path() is None
 
 
 def test_audit_preflight_skips_unused_runtime_checks_for_demo_agent(

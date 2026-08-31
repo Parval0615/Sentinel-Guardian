@@ -135,7 +135,15 @@ class ProductAuthService:
         return AuthCurrentUserResponse(user=_user_summary(user))
 
     def logout(self, authorization: str | None) -> AuthLogoutResponse:
-        self.require_user_from_authorization(authorization)
+        user = self.require_user_from_authorization(authorization)
+        self.storage.write_user(
+            user["user_id"],
+            {
+                **user,
+                "token_version": int(user.get("token_version", 0)) + 1,
+                "updated_at": utc_now_iso(),
+            },
+        )
         return AuthLogoutResponse()
 
     def require_user_from_authorization(self, authorization: str | None) -> dict[str, Any]:
@@ -147,6 +155,8 @@ class ProductAuthService:
         except (FileNotFoundError, ValueError) as exc:
             raise AuthServiceError(401, "token_invalid", "Authentication token is invalid.") from exc
         if user["username"] != claims["username"]:
+            raise AuthServiceError(401, "token_invalid", "Authentication token is invalid.")
+        if int(user.get("token_version", 0)) != claims["token_version"]:
             raise AuthServiceError(401, "token_invalid", "Authentication token is invalid.")
         self._raise_if_user_disabled(user)
         return user
@@ -161,6 +171,7 @@ class ProductAuthService:
             "iat": now,
             "exp": now + expires_in_seconds,
             "purpose": JWT_PURPOSE,
+            "token_version": int(user.get("token_version", 0)),
         }
         return _encode_jwt(payload, self.settings)
 
@@ -177,6 +188,7 @@ class ProductAuthService:
         role = payload.get("role") or "user"
         iat = payload.get("iat")
         exp = payload.get("exp")
+        token_version = payload.get("token_version")
         if (
             not isinstance(user_id, str)
             or not user_id
@@ -185,6 +197,8 @@ class ProductAuthService:
             or role not in {"user", "admin"}
             or not _is_int_claim(iat)
             or not _is_int_claim(exp)
+            or not _is_int_claim(token_version)
+            or token_version < 0
             or payload.get("purpose") != JWT_PURPOSE
         ):
             raise AuthServiceError(401, "token_invalid", "Authentication token is invalid.")
@@ -195,6 +209,7 @@ class ProductAuthService:
             "iat": iat,
             "exp": exp,
             "purpose": JWT_PURPOSE,
+            "token_version": token_version,
         }
 
     def _bearer_token(self, authorization: str | None) -> str:

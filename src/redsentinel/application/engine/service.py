@@ -1413,7 +1413,11 @@ def _adapter_type_for(integration_type: str) -> str:
 
 
 def _can_use_builtin_adapter(registration: AgentRegistration, mode: str) -> bool:
-    return registration.adapter_type in {"ecommerce_demo", "openmanus"} or mode == "offline_trace"
+    return (
+        registration.adapter_type in {"ecommerce_demo", "openmanus"}
+        or (registration.integration_type == "docker" and mode == "sdk")
+        or mode == "offline_trace"
+    )
 
 
 def _builtin_adapter_for(registration: AgentRegistration) -> AgentAdapter:

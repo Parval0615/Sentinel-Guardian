@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import plistlib
 import subprocess
 import tarfile
 from pathlib import Path
@@ -35,6 +36,39 @@ def test_tree_digest_is_stable_and_content_sensitive(tmp_path: Path) -> None:
     assert first == release.tree_digest(root)
     (root / "index.html").write_text("two", encoding="utf-8")
     assert release.tree_digest(root) != first
+
+
+def test_bundle_version_comes_from_project_metadata(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "sentinel"\nversion = "1.2.3"\n',
+        encoding="utf-8",
+    )
+    app_path = tmp_path / release.APP_NAME
+    plist_path = app_path / "Contents" / "Info.plist"
+    plist_path.parent.mkdir(parents=True)
+    with plist_path.open("wb") as stream:
+        plistlib.dump(
+            {
+                "CFBundleExecutable": release.EXECUTABLE_NAME,
+                "CFBundleIdentifier": release.EXPECTED_BUNDLE_ID,
+                "CFBundlePackageType": "APPL",
+                "CFBundleShortVersionString": "0.0.0",
+            },
+            stream,
+        )
+    executable = app_path / "Contents" / "MacOS" / release.EXECUTABLE_NAME
+    executable.parent.mkdir(parents=True)
+    executable.write_text("#!/bin/sh\n", encoding="utf-8")
+    executable.chmod(0o755)
+
+    version = release.read_project_version(tmp_path)
+    release.write_bundle_version(app_path, version)
+    release.validate_info_plist(app_path, expected_version=version)
+
+    with plist_path.open("rb") as stream:
+        payload = plistlib.load(stream)
+    assert payload["CFBundleShortVersionString"] == "1.2.3"
+    assert payload["CFBundleVersion"] == "1.2.3"
 
 
 def test_descriptor_payload_matches_contract(tmp_path: Path) -> None:

@@ -27,7 +27,10 @@ def _client(tmp_path):
     return client
 
 
-def test_audit_api_runs_full_paired_workflow_and_binds_tenant(tmp_path) -> None:
+def test_audit_api_runs_full_paired_workflow_and_binds_tenant(
+    tmp_path,
+    monkeypatch,
+) -> None:
     client = _client(tmp_path)
     registration = client.post(
         "/v1/agents",
@@ -128,12 +131,42 @@ def test_audit_api_runs_full_paired_workflow_and_binds_tenant(tmp_path) -> None:
     assert resumed.status_code == 200
     assert resumed.json() == run
 
+    preflight = client.app.state.audit_preflight
+    original_check = preflight.check
+    monkeypatch.setattr(
+        preflight,
+        "check",
+        lambda **_kwargs: AuditPreflightStatus(
+            agent_id="audit-agent",
+            adapter_type="ecommerce_demo",
+            ready=False,
+            checked_at="2026-01-01T00:00:00Z",
+            checks=[
+                AuditPreflightCheck(
+                    check_id="docker_daemon",
+                    status="blocked",
+                    message="Docker daemon is unavailable.",
+                )
+            ],
+        ),
+    )
+    blocked_next_round = client.post("/v1/audits/audit-1/next-round")
+    assert blocked_next_round.status_code == 422
+    assert "docker_daemon" in blocked_next_round.json()["detail"]["message"]
+    monkeypatch.setattr(preflight, "check", original_check)
+
     next_round = client.post("/v1/audits/audit-1/next-round")
     assert next_round.status_code == 200
     next_run = next_round.json()
-    assert next_run["state"] == "completed"
+    assert next_run["state"] == "attack_review"
     assert next_run["parent_audit_id"] == "audit-1"
     assert next_run["round_index"] == 2
+
+    executed_next_round = client.post(
+        f"/v1/audits/{next_run['audit_id']}/execute?background=false"
+    )
+    assert executed_next_round.status_code == 200
+    assert executed_next_round.json()["state"] == "completed"
 
     next_workspace = client.get(
         f"/v1/audits/{next_run['audit_id']}/workspace"

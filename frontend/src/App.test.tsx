@@ -378,7 +378,7 @@ describe('frontend workflows', () => {
 
     render(<MemoryRouter><App /></MemoryRouter>)
 
-    const table = await screen.findByRole('table', { name: '最近审计' })
+    const table = await screen.findByLabelText('最近审计')
     expect(table.querySelectorAll('.audit-row')).toHaveLength(4)
     expect(screen.getAllByRole('progressbar', { name: '审计完成率' })[0]).toHaveAttribute('aria-valuenow', '40')
     expect(screen.getAllByRole('progressbar', { name: '任务结束率' })[0]).toHaveAttribute('aria-valuenow', '60')
@@ -432,7 +432,7 @@ describe('frontend workflows', () => {
 
     render(<MemoryRouter><AuditRecords /></MemoryRouter>)
 
-    const table = await screen.findByRole('table', { name: '全部审计记录' })
+    const table = await screen.findByLabelText('全部审计记录')
     expect(table.querySelectorAll('.audit-row')).toHaveLength(2)
     const search = screen.getByRole('searchbox', { name: '搜索审计记录' })
     fireEvent.change(search, { target: { value: 'complete' } })
@@ -446,21 +446,29 @@ describe('frontend workflows', () => {
     expect(screen.getByLabelText('按审计状态筛选')).toHaveValue('all')
   })
 
-  it('使用与 ecommerce_demo 匹配的默认审计配置', async () => {
+  it('将 ecommerce_demo 配置作为可审阅建议而非自动填写', async () => {
     vi.spyOn(api, 'listAgents').mockResolvedValue([agent])
 
     render(<MemoryRouter><NewAudit /></MemoryRouter>)
 
-    await screen.findByLabelText('Agent')
+    const select = await screen.findByLabelText('Agent')
+    expect(screen.getByLabelText('攻击基准')).toHaveValue('')
+    expect(screen.getByLabelText('业务任务')).toHaveValue('')
+    expect(screen.getByRole('button', { name: '填入示例' })).toBeDisabled()
+
+    fireEvent.change(select, { target: { value: agent.agent_id } })
     expect(screen.getByLabelText('攻击基准')).toHaveValue('ecommerce-security-v0.1')
-    expect(screen.getByLabelText('正常业务任务')).toHaveValue('搜索降噪耳机')
-    expect(screen.getByLabelText('Oracle 必含片段')).toHaveValue('星云')
-    expect(screen.getByLabelText('Oracle 业务事件')).toHaveValue('product_search')
-    expect(screen.getByLabelText('授权风险面')).toHaveValue(
-      'direct_injection\ndata_exfiltration\nprivilege_escalation\nbusiness_logic_abuse\ngoal_perturbation\ntool_tampering',
-    )
-      expect(screen.getByRole('button', { name: /安全边界/ })).toHaveAttribute('aria-controls', 'audit-boundary')
-      expect(screen.getByRole('button', { name: '返回总览' })).toBeInTheDocument()
+    expect(screen.getByText(/ecommerce-security-v0.1 内置基准模板/)).toBeInTheDocument()
+    expect(screen.getByText('查看系统确定的技术测试范围')).toBeInTheDocument()
+    expect(screen.getByLabelText('业务任务')).toHaveValue('')
+
+    fireEvent.click(screen.getByRole('button', { name: '填入示例' }))
+    expect(screen.getByLabelText('业务任务')).toHaveValue('搜索降噪耳机')
+    expect(screen.getByLabelText('结果中必须出现的内容')).toHaveValue('星云')
+    expect(screen.getByLabelText('执行时必须发生的系统事件')).toHaveValue('product_search')
+    expect(screen.getByRole('button', { name: /保护目标/ })).toHaveAttribute('aria-controls', 'audit-boundary')
+    expect(screen.getByRole('button', { name: '返回总览' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '生成攻击集' })).toBeEnabled()
   })
 
   it('从 Agent API 加载审计下拉并提交 Oracle 配置', async () => {
@@ -479,10 +487,11 @@ describe('frontend workflows', () => {
 
     const select = await screen.findByLabelText('Agent')
     fireEvent.change(select, { target: { value: agent.agent_id } })
-    fireEvent.change(screen.getByLabelText('Oracle 必含片段'), {
+    fireEvent.click(screen.getByRole('button', { name: '填入示例' }))
+    fireEvent.change(screen.getByLabelText('结果中必须出现的内容'), {
       target: { value: '支持政策\n公开信息' },
     })
-    fireEvent.change(screen.getByLabelText('Oracle 业务事件'), {
+    fireEvent.change(screen.getByLabelText('执行时必须发生的系统事件'), {
       target: { value: 'search_products\nread_policy' },
     })
     fireEvent.click(screen.getByRole('button', { name: '生成攻击集' }))
@@ -503,7 +512,7 @@ describe('frontend workflows', () => {
 
     render(<MemoryRouter><Agents /></MemoryRouter>)
 
-    expect(await screen.findByText('接入 Agent')).toBeInTheDocument()
+    expect(await screen.findByText('接入镜像')).toBeInTheDocument()
     expect(screen.queryByText('接入内置演示 Agent')).not.toBeInTheDocument()
 
     const file = new File(['archive'], 'local-agent.tar', {
@@ -516,27 +525,79 @@ describe('frontend workflows', () => {
     expect(await screen.findByRole('heading', { name: '导入 Agent 镜像' })).toBeInTheDocument()
     expect(screen.getAllByText('local-agent.tar').length).toBeGreaterThanOrEqual(1)
     expect(upload).not.toHaveBeenCalled()
-
-    fireEvent.change(screen.getByLabelText(/Python 探针模块（可选）/), {
-      target: { value: 'package.runtime_entry' },
-    })
+    expect(screen.getByText('自动识别运行入口')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Python 运行模块')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '开始导入' }))
 
     expect(upload).toHaveBeenCalledWith(
-      expect.objectContaining({ probeModule: 'package.runtime_entry' }),
+      expect.objectContaining({ probeModule: undefined }),
       expect.any(Function),
     )
   })
 
-  it('空资产页区分顶部 Agent 接入和底部镜像接入', async () => {
+  it('仅在镜像入口无法识别时要求开发人员提供 Python 运行模块', async () => {
+    vi.spyOn(api, 'listAgents').mockResolvedValue([agent])
+    vi.spyOn(api, 'uploadAgentImage')
+      .mockResolvedValueOnce({
+        ...runningImportResult,
+        profile: {
+          ...runningImportResult.profile,
+          analysis: {
+            ...runningImportResult.profile.analysis,
+            status: 'failed',
+            stages: runningImportResult.profile.analysis.stages.map((stage) =>
+              stage.stage === 'dynamic_verify' ? { ...stage, status: 'failed' as const } : stage),
+            errors: [{
+              error_id: 'error:entrypoint',
+              stage: 'dynamic_verify',
+              code: 'unsupported_entrypoint',
+              message: '无法从镜像入口识别可安全导入的 Python 模块',
+              retryable: true,
+              details: {},
+            }],
+          },
+        },
+      })
+      .mockResolvedValueOnce(runningImportResult)
+    vi.spyOn(api, 'getAgentProfileStatus').mockResolvedValue({
+      ...runningProfileStatus,
+      status: 'failed',
+      errors: [{
+        error_id: 'error:entrypoint',
+        stage: 'dynamic_verify',
+        code: 'unsupported_entrypoint',
+        message: '无法从镜像入口识别可安全导入的 Python 模块',
+        retryable: true,
+        details: {},
+      }],
+    })
+
+    render(<MemoryRouter><Agents /></MemoryRouter>)
+    fireEvent.change(await screen.findByLabelText('选择 Agent 镜像文件'), {
+      target: { files: [new File(['archive'], 'shell-agent.tar')] },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '开始导入' }))
+
+    const moduleInput = await screen.findByLabelText('Python 运行模块')
+    expect(screen.getByRole('button', { name: '使用模块重新分析' })).toBeDisabled()
+    fireEvent.change(moduleInput, { target: { value: 'package.runtime_entry' } })
+    fireEvent.click(screen.getByRole('button', { name: '使用模块重新分析' }))
+
+    await waitFor(() => expect(api.uploadAgentImage).toHaveBeenLastCalledWith(
+      expect.objectContaining({ probeModule: 'package.runtime_entry' }),
+      expect.any(Function),
+    ))
+  })
+
+  it('空资产页只保留一个镜像接入入口', async () => {
     vi.spyOn(api, 'listAgents').mockResolvedValue([])
 
     render(<MemoryRouter><Agents /></MemoryRouter>)
 
     expect(await screen.findByText('暂无 Agent 资产。请上传镜像并完成画像构建。')).toBeInTheDocument()
-    expect(screen.getByText('接入 Agent')).toBeInTheDocument()
-    expect(screen.getByText('接入镜像')).toBeInTheDocument()
-    expect(screen.queryByText('开始接入')).not.toBeInTheDocument()
+    expect(screen.getAllByText('接入镜像')).toHaveLength(1)
+    expect(screen.queryByText('选择镜像')).not.toBeInTheDocument()
+    expect(screen.queryByText('接入 Agent')).not.toBeInTheDocument()
   })
 
   it('上传弹窗的画像轮询超时后点击重试会重新发起请求', async () => {
@@ -680,7 +741,7 @@ describe('frontend workflows', () => {
     expect(screen.getByText('local-sdk')).toBeInTheDocument()
     expect(screen.getAllByText('product_search').length).toBeGreaterThan(0)
     expect(screen.getByText('搜索商品目录')).toBeInTheDocument()
-    const audits = screen.getByRole('table', { name: `${agent.name} 最近审计` })
+    const audits = screen.getByLabelText(`${agent.name} 最近审计`)
     expect(audits).toHaveTextContent('audit-latest')
     expect(audits).toHaveTextContent('audit-old')
     expect(audits).not.toHaveTextContent('other-agent-audit')
@@ -881,9 +942,15 @@ describe('frontend workflows', () => {
     fireEvent.change(select, { target: { value: openmanusAgent.agent_id } })
 
     expect(screen.getByLabelText('攻击基准')).toHaveValue('openmanus-security-v0.1')
-    expect(screen.getByLabelText('正常业务任务')).toHaveValue('请用 Python 计算 17 乘以 23，并解释计算过程')
-    expect(screen.getByLabelText('Oracle 业务事件')).toHaveValue('python_execute')
     expect(await screen.findByText('静态画像已就绪')).toBeVisible()
+    expect(screen.getByText(/静态画像 · 2 个适用威胁/)).toBeInTheDocument()
+    expect(screen.getByLabelText('业务任务')).toHaveValue('')
+
+    fireEvent.click(screen.getByRole('button', { name: '填入示例' }))
+    expect(screen.getByLabelText('不能发生什么')).toHaveValue('阻断画像识别的高风险路径')
+    expect(screen.getByText('prompt_injection')).toBeInTheDocument()
+    expect(screen.getByText('command_injection')).toBeInTheDocument()
+    expect(screen.getByLabelText('业务任务')).toHaveValue('')
   })
 
   it('OpenManus 静态画像未发布时阻止生成攻击集', async () => {
@@ -959,6 +1026,20 @@ describe('frontend workflows', () => {
       target: { value: openmanusAgent.agent_id },
     })
     expect(screen.getByRole('button', { name: '生成攻击集' })).toBeDisabled()
+    await screen.findByText('静态画像已就绪')
+    fireEvent.click(screen.getByRole('button', { name: '填入示例' }))
+    fireEvent.change(screen.getByLabelText('业务任务'), {
+      target: { value: '请用 Python 计算 17 乘以 23' },
+    })
+    fireEvent.change(screen.getByLabelText('完成标准'), {
+      target: { value: '返回正确结果且不访问敏感文件' },
+    })
+    fireEvent.change(screen.getByLabelText('结果中必须出现的内容'), {
+      target: { value: '391' },
+    })
+    fireEvent.change(screen.getByLabelText('执行时必须发生的系统事件'), {
+      target: { value: 'python_execute' },
+    })
 
     for (const title of ['被测 Agent', '攻击 Agent', '防御 Agent']) {
       fireEvent.change(screen.getByLabelText(`${title} API 地址`), {
@@ -1214,7 +1295,19 @@ describe('frontend workflows', () => {
         bundle_id: 'bundle-1', deployment_type: 'sandbox_policy',
         policies: [{ action_id: 'action-1', target_node: 'input', guard: 'input_firewall', parameters: { mode: 'strict' } }],
       },
-      remediation_installation: { installation_id: 'install-1', status: 'installed', active_guards: ['input_firewall'] },
+      remediation_installation: {
+        installation_id: 'install-1',
+        audit_id: 'audit-1',
+        bundle_id: 'bundle-1',
+        bundle_sha256: 'a'.repeat(64),
+        target_environment: 'audit_sandbox',
+        status: 'installed',
+        policy_ref: '/tmp/audit-1/remediation-policy.json',
+        policy_sha256: 'b'.repeat(64),
+        active_guards: ['input_firewall'],
+        installed_action_ids: ['action-1'],
+        installed_at: '2026-01-01T00:00:01Z',
+      },
       round: {
         round_index: 1,
         parent_audit_id: null,
@@ -1293,6 +1386,8 @@ describe('frontend workflows', () => {
     render(<AuditReport data={data} />)
 
     expect(screen.getAllByText('input_firewall').length).toBeGreaterThan(0)
+    expect(screen.getByText('防护已挂载并用于本轮复测')).toBeInTheDocument()
+    expect(screen.getByText('已挂载')).toBeInTheDocument()
     expect(screen.getByText('修复后复测')).toBeInTheDocument()
     expect(screen.getByText('防护有效但需复测')).toBeInTheDocument()
     expect(screen.getByText('部署环境未验证')).toBeInTheDocument()
@@ -1317,16 +1412,16 @@ describe('frontend workflows', () => {
     expect(screen.getByText('S2 工具越权')).toBeInTheDocument()
     expect(screen.getAllByTestId('path-node')).toHaveLength(1)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Guarded' }))
+    fireEvent.click(screen.getByRole('button', { name: '防护后' }))
     expect(screen.getByText('S2 已阻断')).toBeInTheDocument()
     expect(screen.getByTestId('attack-path')).toHaveClass('guarded')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Baseline' }))
+    fireEvent.click(screen.getByRole('button', { name: '防护前' }))
     fireEvent.click(screen.getByRole('button', { name: '查看轨迹：s3' }))
-    expect(screen.getByRole('button', { name: 'Guarded' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: '防护后' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByText('S3 仅有防护轨迹')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Baseline' }))
+    fireEvent.click(screen.getByRole('button', { name: '防护前' }))
     expect(screen.getAllByText('攻击成功').length).toBeGreaterThan(0)
   })
 })

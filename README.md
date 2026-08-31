@@ -114,7 +114,9 @@ Sentinel-Guardian 不是普通问答、检索或报表 Agent，而是让一个�
 默认工程回归：
 
 ```text
-1061 passed, 2 deselected
+1068 passed, 2 deselected
+50 frontend tests passed
+2 Playwright viewport flows passed
 Ruff passed
 ```
 
@@ -143,13 +145,13 @@ C2 自主测试规划          核心与计划页面完成
 C3 攻击-加固-复测编排    已完成
 C4 企业知识助手案例      已完成
 C5 竞赛产品展示          已完成
-C6 提交与演示验收        待启动
+C6 提交与演示验收        进行中
 ```
 
 详细任务、验收条件和非目标见 [竞赛 Roadmap](ROADMAP.md)。
 
-当前开发焦点不是扩展更多攻击类别或 Agent 框架，而是把已有底层能力收敛成一个
-用户可以直接触发、全过程可观察、最终能够做出上线决策的自主任务。
+当前开发焦点是使用真实模型凭据完成最终 OpenManus 现场验收，并录制 3–5 分钟
+演示视频；产品闭环、自动化测试、架构图、截图和桌面交付包已经完成。
 
 ## 五分钟离线演示
 
@@ -204,6 +206,10 @@ redsentinel evaluate --output-dir artifacts --seed 42
 ## 可选审计工作区
 
 ```bash
+cd frontend
+npm install
+npm run build
+cd ..
 export RED_SENTINEL_JWT_SECRET="replace-with-a-random-secret-at-least-32-chars"
 export RED_SENTINEL_PLANNER_API_KEY="replace-with-planner-key"
 export RED_SENTINEL_PLANNER_BASE_URL="https://api.example.com/v1"
@@ -213,6 +219,8 @@ python -m uvicorn redsentinel.apps.api:create_app \
 ```
 
 打开 `http://127.0.0.1:8000/`。
+Product API 只托管 React 构建产物 `frontend/dist/index.html`；不会回退到历史
+`frontend/index.html`。开发时也可以分别启动后端和 `npm run dev`。
 
 Planner 三个环境变量全部缺失时使用确定性回退；部分配置会被拒绝。真实调用只保存模型、
 provider host、延迟、token usage、Prompt SHA-256 和响应 SHA-256，不保存 Prompt 正文或

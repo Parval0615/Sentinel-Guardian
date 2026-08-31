@@ -42,6 +42,7 @@ from redsentinel.application.contracts import (
 )
 from redsentinel.application.image_profile_contracts import ImageAgentProfile
 from redsentinel.application.engine.audit_planner import AuditPlanner
+from redsentinel.application.engine.image_profile_workflow import ImageProfileWorkflowService
 from redsentinel.application.engine.llm_gateway import JsonLLMGateway
 from redsentinel.application.engine.remediation import (
     RemediationInstaller,
@@ -98,11 +99,13 @@ class AuditWorkflowService:
         planner: AuditPlanner | None = None,
         defense_gateway: JsonLLMGateway | None = None,
         remediation_installer: RemediationInstaller | None = None,
+        image_profiles: ImageProfileWorkflowService | None = None,
     ) -> None:
         self.service = service
         self.storage = service.storage
         self.planner = planner or AuditPlanner()
         self.defense_gateway = defense_gateway
+        self.image_profiles = image_profiles
         self.remediation_installer = remediation_installer or RemediationInstaller(
             self.storage
         )
@@ -739,7 +742,9 @@ class AuditWorkflowService:
         task: AuditTask,
     ) -> tuple[str, str, AgentProfile, ImageAgentProfile | None]:
         if task.profile_id is not None:
-            profile = self.service.image_profiles.get_profile(
+            if self.image_profiles is None:
+                raise ValueError("Image profile service is unavailable for this audit.")
+            profile = self.image_profiles.get_profile(
                 tenant_id=task.tenant_id,
                 agent_id=task.agent_id,
                 profile_id=task.profile_id,

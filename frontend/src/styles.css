@@ -68,7 +68,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .signal span { display: inline-block; width: 7px; height: 7px; margin-right: 8px; border-radius: 50%; background: var(--success); }
 .auth-panel { padding: 8vh clamp(44px, 7vw, 92px); display: flex; flex-direction: column; justify-content: center; background: var(--surface); }
 .auth-panel h2 { margin: 30px 0 8px; font-size: 28px; line-height: 1.25; letter-spacing: 0; }
-.auth-footnote { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 20px 0 0; color: var(--text-tertiary); font-size: 12px; }
+.auth-footnote { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 20px 0 0; color: var(--text-secondary); font-size: 12px; }
 .mobile-brand { display: none; }
 .tabs { display: flex; border-bottom: 1px solid var(--border); }
 .tabs button { flex: 1; padding: 12px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--text-secondary); cursor: pointer; }

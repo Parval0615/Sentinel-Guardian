@@ -78,20 +78,21 @@ def _ecommerce_demo_source_path() -> Path:
 
 
 def _frontend_index_path() -> Path | None:
+    configured_frontend = os.environ.get("RED_SENTINEL_FRONTEND_ROOT", "").strip()
+    if configured_frontend:
+        configured_index = (
+            Path(configured_frontend).expanduser() / "dist" / "index.html"
+        )
+        return configured_index if configured_index.is_file() else None
     configured = os.environ.get("RED_SENTINEL_RESOURCE_ROOT", "").strip()
+    if configured:
+        bundled = Path(configured).expanduser() / "frontend" / "dist" / "index.html"
+        return bundled if bundled.is_file() else None
     candidates = [
-        Path(configured).expanduser() / "frontend" / "dist" / "index.html"
-        if configured
-        else None,
         Path.cwd() / "frontend" / "dist" / "index.html",
-        Path.cwd() / "frontend" / "index.html",
         Path(__file__).resolve().parents[4] / "frontend" / "dist" / "index.html",
-        Path(__file__).resolve().parents[4] / "frontend" / "index.html",
     ]
-    return next(
-        (path for path in candidates if path is not None and path.is_file()),
-        None,
-    )
+    return next((path for path in candidates if path.is_file()), None)
 
 
 def create_app(
@@ -348,18 +349,6 @@ def create_app(
         thread.start()
         return True
 
-    def require_audit_models(audit_id: str, tenant_id: str) -> None:
-        run = service.get_audit(audit_id, tenant_id=tenant_id)
-        agent = service.get_agent(
-            agent_id=run.agent_id,
-            tenant_id=tenant_id,
-        )
-        if agent.adapter_type == "openmanus":
-            model_runtime.require_ready(
-                tenant_id,
-                ("target", "attack", "defense"),
-            )
-
     def require_audit_runtime(audit_id: str, tenant_id: str) -> None:
         run = service.get_audit(audit_id, tenant_id=tenant_id)
         status = audit_preflight.check(
@@ -497,8 +486,8 @@ def create_app(
     @app.post("/v1/agents/import-image", status_code=202)
     async def import_agent_image(
         request: Request,
-        agent_id: str,
-        name: str,
+        agent_id: str | None = None,
+        name: str | None = None,
         domain: str = "general",
         probe_module: str | None = None,
         expected_frameworks: str = "",
@@ -519,7 +508,7 @@ def create_app(
             )
             start_profile(
                 tenant_id_for_user(user),
-                agent_id,
+                result.agent.agent_id,
                 result.profile.analysis.analysis_id,
             )
             return result.model_dump(mode="json")
@@ -604,6 +593,24 @@ def create_app(
             profile = service.image_profiles.get_latest_profile(
                 tenant_id=tenant_id_for_user(user),
                 agent_id=agent_id,
+            )
+            response = JSONResponse(content=profile.model_dump(mode="json"))
+            response.headers["ETag"] = f'"{image_profile_sha256(profile)}"'
+            return response
+        except ImageProfileWorkflowError as exc:
+            raise profile_error(exc) from exc
+
+    @app.get("/v1/agents/{agent_id}/profiles/{profile_id}")
+    def get_agent_profile_version(
+        agent_id: str,
+        profile_id: str,
+        user: dict[str, Any] = Depends(require_authenticated_user),
+    ):
+        try:
+            profile = service.image_profiles.get_profile(
+                tenant_id=tenant_id_for_user(user),
+                agent_id=agent_id,
+                profile_id=profile_id,
             )
             response = JSONResponse(content=profile.model_dump(mode="json"))
             response.headers["ETag"] = f'"{image_profile_sha256(profile)}"'
@@ -1015,28 +1022,21 @@ def create_app(
     @app.post("/v1/audits/{audit_id}/next-round")
     def create_next_audit_round(
         audit_id: str,
-        background: bool = False,
-        prepare_only: bool = False,
         user: dict[str, Any] = Depends(require_authenticated_user),
     ):
         tenant_id = tenant_id_for_user(user)
         try:
-            require_audit_models(audit_id, tenant_id)
+            require_audit_runtime(audit_id, tenant_id)
             with model_runtime.tenant_context(tenant_id):
                 next_run = service.create_next_audit_round(
                     audit_id,
                     tenant_id=tenant_id,
-                    run_immediately=not background and not prepare_only,
+                    run_immediately=False,
                 )
-            if prepare_only:
-                with model_runtime.tenant_context(tenant_id):
-                    return service.prepare_audit(
-                        next_run.audit_id,
-                        tenant_id=tenant_id,
-                    ).model_dump(mode="json")
-            if background:
-                start_audit(tenant_id, next_run.audit_id)
-            return next_run.model_dump(mode="json")
+                return service.prepare_audit(
+                    next_run.audit_id,
+                    tenant_id=tenant_id,
+                ).model_dump(mode="json")
         except (FileNotFoundError, ValueError) as exc:
             raise HTTPException(
                 status_code=422,
